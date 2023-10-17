@@ -1,0 +1,1 @@
+prompt = {"role": "system", "content": "4000 Wörter zu '" + titel +"' auf Deutsch für Kinder"}
