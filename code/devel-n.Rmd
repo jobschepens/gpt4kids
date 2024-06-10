@@ -1,0 +1,310 @@
+---
+title: "Correlation between frequency lists"
+output: html_document
+---
+
+```{r}
+# written and run in R 4.2.2
+MIN_FREQUENCY = 0
+MIN_FREQUENCY_JOINED = 0
+MAX_FREQUENCY = 10001 # for plotting
+
+library(tidyverse)
+library(tm)
+```
+
+###Load dataset 
+
+DeveL including
+- SUBTLEX-Ger
+- LLM based Frequencies
+
+```{r}
+load("./data-processed/DeveL_data_and_Freq.RData", verbose = T) # DeveL Dataset
+```
+
+
+## Functions for the frequency generation
+
+```{r}
+#Function for the estimation of frequencies from a corpus
+getFreqMat = function(df, opts = list()) {
+	corpus = Corpus(VectorSource(df$text)) # get corpus from dataframe 
+	tdm = as.matrix(TermDocumentMatrix(corpus, control = opts)) 
+	feqmat = data.frame(type = rownames(tdm), # Words
+											 ai_freq = rowSums(tdm), # Add up occurancies
+											 row.names = NULL)
+	# x = lexicon::freq_first_names %>% slice_max(prop, n = 4000) # Remove names
+	# feqmat = feqmat[!(feqmat$type %in% x$Name),]
+}
+
+#Text options to include in corpus
+opts <- list(removeNumbers = TRUE,
+                        removePunctuation = TRUE,
+                        # preserve_intra_word_contractions = TRUE,
+                        # preserve_intra_word_dashes = TRUE,
+                        stopwords = F,
+                        stemming = FALSE, 
+                        tolower=FALSE,
+                        wordLengths = c(2, Inf))
+```
+
+#### Load corpus
+
+with pre-processing
+```{r}
+df_l = readtext::readtext("./data-original/gpt3_5_texts/gen_texts*/*.txt")
+df_l$story = grepl("Story_",df_l$doc_id) # Check if it is a story
+df_stories = subset(df_l,df_l$story) # Remove all non story related text
+df_stories$sN = gsub("gen_texts_age_long_05042023_gpt3-5/Story_","",df_stories$doc_id) # get the book title
+df_stories$sN = as.data.frame(do.call(rbind, strsplit(df_stories$sN, "/")))$V2
+df_stories$sN = gsub("Story_","",df_stories$sN)
+df_stories$sN = gsub(".txt","",df_stories$sN) # Make everything a bit more readable
+df_stories$sN = as.numeric(df_stories$sN)+1 # Add story number
+df_stories
+```
+### Calculate partial frequency measurs for Figure 5A
+```{r}
+story = seq(1,500,1)
+for (ii in 1:length(story)) { # Loop for all 500 stories and select only a part of it
+  df_stories$select = (df_stories$sN <= story[ii]) # Take all stories smaller than i and i can be a number from 1 to 500
+  df_l_s = subset(df_stories, df_stories$select)
+  freqmat_l = getFreqMat(df_l_s, opts) # estimate word frequencies for the subset
+  freqmat_l$ai_norm = 1000000 * freqmat_l$ai_freq / (sum(freqmat_l$ai_freq)) # normalize word frequency
+
+  freqmat_l$ai_norm_log = log(freqmat_l$ai_norm) # get the log.
+  col_name = paste0("ai_norm_log_story_1_", story[ii]) # create variable name
+  result[, col_name] = NULL #create column
+  for (i in 1:length(result$subtlex_freq_log)){ 
+    tmp = freqmat_l$ai_norm_log[match(result$word, freqmat_l$type)] # copy the subset frequency
+    tmp[is.na(tmp)]=log(0.1) # check for NA values and replace them with the log(0.1)
+
+    result[, col_name] <- tmp # store the subset based word frequency
+  }
+  print(story[ii])
+}
+summary(result)
+save(result, file = "data-processed/devel-result-n.RData")
+```
+### Generate Models and estimate model fits for subset-based word frequency
+Function for formula creation from text
+```{r}
+formula_maker = function(dep = "x", independents="s+e"){ 
+  f = paste(dep,"~",independents) # combine depended variable and independents
+  return(as.formula(f)) # convert to formula and retun the formula object
+}
+```
+
+Estimate subset word frequency models (i.e., Fig. 5C, 5D)
+```{r}
+result$child.type.freq.log = log(result$child.type.freq) # get log ChildLex frequency for Fig. 5D
+result$dwds.type.freq.log = log(result$dwds.type.freq) # get log DWDS frequency for later (Fig. 6)
+
+dependendents = c("rt.g1.m","rt.g2.m","rt.g3.m","rt.g4.m","rt.g6.m","rt.ya.m","rt.oa.m")  # list of dependent variables
+
+colnames = colnames(result)
+indies =  colnames[unlist(lapply(colnames, function(x) {grepl("ai_norm_log_story_1_", x)}))] # get list of subset frequency measures
+base_indies = "child.old20+aoa+letter.cnt+unigram+bigram+trigram"  # get list of co-variates of no interest for Fig. 5C 
+base_indies_childlex = "child.old20+aoa+letter.cnt+unigram+bigram+trigram+child.type.freq.log"  # get list of co-variates of no interest for Fig. 5D
+formulas = list()
+formulas_base = list()
+formulas_base_childlex = list()
+used_dep = list()
+used_indi = list()
+
+for (i in 1:length(indies)) { # Outer loop for creating formulas for each models for each subset word frequency
+  indi = paste(base_indies, "+", indies[i]) # add frequency estimate name to the co-variates
+  for (ii in 1:length(dependendents)){ # Inner loop for adding each dependent variable to the indipendent variables
+    depend = dependendents[ii] # get dependent variable
+    used_dep = append(used_dep, depend) 
+    used_indi = append(used_indi, indies[i]) 
+    formulas = append(formulas, formula_maker(dep = depend,independents = indi))
+    formulas_base = append(formulas_base, formula_maker(dep = depend,independents = base_indies)) # store the formulas for Fig. 5C
+    formulas_base_childlex = append(formulas_base_childlex, formula_maker(dep = depend,independents = base_indies_childlex)) # store the formulas for Fig. 5D
+    
+  }
+}
+model_comparison_df = data.frame(rt_group = unlist(used_dep), frequency_measure = unlist(used_indi), AIC = 0, AIC_childLex = 0) # create a dataframe to store the model fit (i.e., AIC)
+
+for (i in 1:length(formulas)) { # loop over all created formulas
+  model_comparison_df$AIC[i] = AIC(lm(formulas_base[[i]],data=result)) - AIC(lm(formulas[[i]],data=result)) # Estimate model fit with a lm() for Fig. 5C (AIC(Baseline model) - AIC(Model including frequency))
+  model_comparison_df$AIC_childLex[i] = AIC(lm(formulas_base_childlex[[i]],data=result)) - AIC(lm(formulas[[i]],data=result)) # Estimate model fit for Fig. 5D
+}
+save(result, file = "data-processed/model_comparison_df-n.RData")
+```
+
+##### Create figure 5CD
+```{r}
+model_comparison_df$Readers = plyr::revalue(model_comparison_df$rt_group, c("rt.g1.m" = "1st\nGrade"
+                                                                         , "rt.g2.m" = "2nd\nGrade"
+                                                                         ,"rt.g3.m" = "3rd\nGrade"
+                                                                         ,"rt.g4.m" = "4th\nGrade"
+                                                                         ,"rt.g6.m" = "6th\nGrade"
+                                                                         ,"rt.ya.m" = "Young\nAdult"
+                                                                         ,"rt.oa.m" = "Old\nAdult")
+                                         )
+desired_order = c("1st\nGrade", "2nd\nGrade", "3rd\nGrade", "4th\nGrade", "6th\nGrade", "Young\nAdult", "Old\nAdult")
+model_comparison_df$Readers = factor(model_comparison_df$Readers, levels = desired_order)
+model_comparison_df$Story = as.numeric(gsub("ai_norm_log_story_1_","",model_comparison_df$frequency_measure))
+
+#Figure 5C
+lex_dec_pl = ggplot(model_comparison_df, aes(y= (AIC), x= Story, color=Readers))+
+  geom_hline(yintercept = 3)+
+  geom_line()+
+  theme_minimal()+
+  ylab("Model fit increase\n[AIC relative to H0]")+
+  xlab("Number of texts")+
+  scale_color_manual(values = c("#90e0ef","#00b4d8","#0077b6","#03045e", "#e63946","#fb8500","#2a9d8f"))
+
+#Figure 5D
+lex_dec_pl_chl = ggplot(model_comparison_df, aes(y= (AIC_childLex), x= Story, color=Readers))+
+  geom_hline(yintercept = 3)+
+  geom_line()+
+  theme_minimal()+
+  ylab("Model fit increase\n[AIC relative to ChildLex]")+
+  xlab("Number of texts")+
+  scale_color_manual(values = c("#90e0ef","#00b4d8","#0077b6","#03045e", "#e63946","#fb8500","#2a9d8f")
+                     ,labels = c("1st Grade", "2nd Grade","3rd Grade","4th Grade","6th Grade","Young Adult","Old Adult"))
+
+# arrange the plots in a row
+prow <- cowplot::plot_grid(
+lex_dec_pl + theme(legend.position="none"),
+lex_dec_pl_chl + theme(legend.position="none"),
+align = 'vh',
+hjust = -1,
+nrow = 1
+)
+# extract the legend from one of the plots
+legend = cowplot::get_legend(
+lex_dec_pl_chl + theme(legend.box.margin = margin(0, 0, 0, 12))
+)
+
+cowplot::plot_grid(prow, legend, rel_widths = c(3, .6))
+```
+##### Estimate correlations based on partial corpus word frequencies 
+Here we used the same logic as above but we only correlated the partial LLM frequencies with the full ChildLex frequency
+```{r}
+dependendents = c("child.type.freq.log") # ChildLex frequency as dependent variable
+
+colnames = colnames(result)
+indies = colnames[unlist(lapply(colnames, function(x) {grepl("ai_norm_log_story_1_", x)}))] # get the list of partial frequency estimates
+
+formulas = list()
+formulas_base = list()
+formulas_base_childlex = list()
+used_dep = list()
+used_indi = list()
+story = list()
+
+# Create formula again for each of the partial frequencies
+for (i in 1:length(indies)) { 
+  indi = indies[i]
+  used_indi = append(used_indi, indies[i])
+  formulas = append(formulas, formula_maker(dep = dependendents,independents = indi))# store formulas
+}
+
+r_df = data.frame(frequency_measure = unlist(used_indi), r = 0) # create data frame for storing correlation coefficients
+
+for (i in 1:length(formulas)) {
+  r_df$r[i] = cor.test(as.formula(paste("~ child.type.freq.log +",as.character(formulas[[i]])[3])), data=result)$estimate # estimate the correlation for each subset frequency
+}
+
+r_df$Story = as.numeric(gsub("ai_norm_log_story_1_","",r_df$frequency_measure))
+```
+
+Create figure 5A
+```{r}
+cor_freq_par_pl = ggplot(r_df, aes(y= r, x= Story))+
+  geom_line()+
+  theme_minimal()+
+  ylab("r\n[LLM-ChildLex]")+
+  xlab("Number of texts")
+
+cor_freq_par_pl
+```
+
+##### Estimate correlations matrix and show it.
+```{r}
+#create correlation data frame
+cor_df = data.frame(r = r_df$r #correlations from Fig 5A 
+                     ,N = (seq(1,500)) # number of stories included
+                     ,G1 = model_comparison_df$AIC[model_comparison_df$rt_group=="rt.g1.m"] #AICs from Fig 5c
+                     ,G2 = model_comparison_df$AIC[model_comparison_df$rt_group=="rt.g2.m"]
+                     ,G3 = model_comparison_df$AIC[model_comparison_df$rt_group=="rt.g3.m"]
+                     ,G4 = model_comparison_df$AIC[model_comparison_df$rt_group=="rt.g4.m"]
+                     ,G6 = model_comparison_df$AIC[model_comparison_df$rt_group=="rt.g6.m"]
+                     ,YA = model_comparison_df$AIC[model_comparison_df$rt_group=="rt.ya.m"]
+                     ,OA = model_comparison_df$AIC[model_comparison_df$rt_group=="rt.oa.m"]
+                     )
+cor_mat=cor(cor_df,use="complete.obs") # calculate correlation matrix
+
+corrplot::corrplot.mixed(cor_mat, lower.col = 'black', upper='ellipse')# plot matrix
+```
+### Generate Models and estimate model fits for four different word frequency estimates (Figure 6)
+Logic again similar as above
+```{r}
+
+dependendents = c("rt.g1.m","rt.g2.m","rt.g3.m","rt.g4.m","rt.g6.m","rt.ya.m","rt.oa.m")  # list of dependent variables 
+indies = c("child.type.freq.log","dwds.type.freq.log","ai_norm_log_story_1_500","subtlex_freq_log")  # list of the four frequency variables 
+base_indies = "child.old20+aoa+letter.cnt+phon.cnt+unigram+bigram+trigram" # list of the co-variates of no interest
+
+formulas = list()
+formulas_base = list()
+used_dep = list()
+used_indi = list()
+
+# generate the list of formulas for all combinations of indipendent and dependent variables
+for (i in 1:length(indies)) {
+  indi = paste(base_indies, "+", indies[i])
+  for (ii in 1:length(dependendents)){
+    depend = dependendents[ii]
+    used_dep = append(used_dep, depend) 
+    used_indi = append(used_indi, indies[i]) 
+    formulas = append(formulas, formula_maker(dep = depend,independents = indi))
+    formulas_base = append(formulas_base, formula_maker(dep = depend,independents = base_indies)) 
+  }
+}
+
+#create data frame to store model fit estimates
+model_comparison_df = data.frame(rt_group = unlist(used_dep), frequency_measure = unlist(used_indi), AIC = 0)
+
+# estimate model fit for all formulas
+for (i in 1:length(formulas)) {
+  model_comparison_df$AIC[i] = AIC(lm(formulas_base[[i]],data=result)) - AIC(lm(formulas[[i]],data=result))
+}
+
+```
+
+Create figure 6
+```{r}
+model_comparison_df$pl_x = plyr::revalue(model_comparison_df$rt_group, c("rt.g1.m" = "1st\nGrader"
+                                                                         , "rt.g2.m" = "2nd\nGrader"
+                                                                         ,"rt.g3.m" = "3rd\nGrader"
+                                                                         ,"rt.g4.m" = "4th\nGrader"
+                                                                         ,"rt.g6.m" = "6th\nGrader"
+                                                                         ,"rt.ya.m" = "Young\nAdults"
+                                                                         ,"rt.oa.m" = "Old\nAdults")
+                                         )
+desired_order = c("1st\nGrader", "2nd\nGrader", "3rd\nGrader", "4th\nGrader", "6th\nGrader", "Young\nAdults", "Old\nAdults")
+model_comparison_df$pl_x = factor(model_comparison_df$pl_x, levels = desired_order)
+
+
+model_comparison_df$Measure = plyr::revalue(model_comparison_df$frequency_measure, c("child.type.freq.log" = "ChildLex"
+                                                                         , "dwds.type.freq.log" = "DWDS"
+                                                                         ,"ai_norm_log_story_1_500" = "LLM"
+                                                                         ,"subtlex_freq_log" = "SUBTLEX")
+                                         )
+desired_order = c("ChildLex","DWDS","SUBTLEX","LLM")
+model_comparison_df$Measure = factor(model_comparison_df$Measure, levels = desired_order)
+
+lex_dec_pl = ggplot(model_comparison_df, aes(y= (AIC), x= pl_x, fill=Measure))+
+  geom_bar(position="dodge", stat = "identity")+
+  theme_minimal()+
+  ylab("Model fit increase [AIC relative to H0]")+
+  xlab("Group")+
+  ylim(0,400) +
+  scale_fill_manual(values = c("#e63946","#2a9d8f","#fb8500","#0077b6")) 
+
+
+lex_dec_pl
+```   
