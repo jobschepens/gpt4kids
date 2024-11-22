@@ -1,7 +1,8 @@
+ # data from tm_ben.Rmd
+load("data-processed/corpus-3.5-PUNC.RData", verbose = T)
 # load("data-processed/merged_df-type-3.5.RData")
 # load("data-processed/corpus.RData", verbose = T)
 # load("data-processed/corpus-3.5.RData", verbose = T)
-load("data-processed/corpus-3.5-PUNC.RData", verbose = T)
 # load("data-processed/corpus-lemma.RData", verbose = T)
 # load("data-processed/tidycorpus-text.RData", verbose = T)
 

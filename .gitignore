@@ -47,3 +47,8 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# intermediate files
+/data-processed/
+/figures/
+/code/preprintv1/

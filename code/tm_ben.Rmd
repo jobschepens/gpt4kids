@@ -25,6 +25,7 @@ my_theme = theme(
 MIN_FREQUENCY = 0
 MIN_FREQUENCY_JOINED = 0
 MIN_FREQUENCY_LABEL = 17
+MIN_FREQUENCY_LABEL = 5
 MAX_FREQUENCY = 70001 # for plotting
 knitr::opts_chunk$set(echo = TRUE)
 # readRenviron("../RProfile.site")
@@ -35,9 +36,10 @@ knitr::opts_chunk$set(echo = TRUE)
 # install.packages("ggrepel")
 # install.packages("textstem")
 # install.packages("ggpointdensity")
+# install.packages("ks")
 # install.koRpus.lang("de")
 # library("koRpus.lang.de")
-library(textstem)
+# library(textstem)
 library(ggrepel)
 library(tm)
 library(readtext)
@@ -47,7 +49,9 @@ library(scales)
 library(lexicon)
 library(viridis)
 library(ggpointdensity)
+library(ks)
 ```
+
 
 ## Load LLM frequency list
 
@@ -72,40 +76,99 @@ opts <- list(removeNumbers = T,
 						wordLengths = c(2, Inf))
 
 ### LEMMA OR TYPES 
-wordtype = "type"
+conditions = c("adlt", "adht", "chlt", "chht")
+ftables <- list()
+
+# start for loop
+for(cond in conditions) {
+print(cond)
+
+# cond = "adlt"
+# cond = "adht"
+# cond = "chlt"
+# cond = "chht"
+
+wordtype = "types"
 # wordtype = "lemma"
-if (wordtype == "type") {
-	df_l <- readtext::readtext("data-original/gpt3_5_texts/gen_texts*/*.txt")
-	# df_m <- readtext::readtext("data-original/gpt_4_texts/gen_texts*/*.txt")
-	# save(df_l, file = "data-processed/corpus.RData")
-	# save(df_l, file = "data-processed/corpus-3.5.RData")
-	# save(df_l, file = "data-processed/corpus-3.5-PUNC.RData")
+
+if (wordtype == "types") {
+	# df_l <- readtext::readtext("data-original/gpt3_5_texts/gen_texts*/*.txt")
+	# df_l <- readtext::readtext("data-original/exp2/adht/*.txt")
+	# df_l <- readtext::readtext("data-original/exp2/adlt/*.txt")
+	df_l <- readtext::readtext(paste0("data-original/exp2/", cond, "/*.txt"))
+	# save(df_l, file = "data-processed/corpus-3.5-PUNC.RData") # used for udpipe
+	# save(df_l, file = "data-processed/corpus-adlt.RData") # used for udpipe
+	# save(df_l, file = "data-processed/corpus-adht.RData") # used for udpipe
+	save(df_l, file = paste0("data-processed/corpus-", cond, ".RData")) # used for udpipe
 	# load("data-processed/corpus-3.5.RData", verbose = T)
 	freqmat_l <- getFreqMat(df_l, opts) # types
-	# save(freqmat_l, file = "data-processed/freqmat_l_types.RData")
 } else {
 	# load("data-processed/tidycorpus.RData") # words on lines
 	# load("data-processed/tidycorpus-text.RData", verbose = T) # texts on lines
 	# load("data-processed/tidycorpus-text-3.5.RData", verbose = T) # texts on lines
-	load("data-processed/tidycorpus-text-3.5-ch.RData", verbose = T) # texts on lines (udpipe)
+	# load("data-processed/tidycorpus-text-3.5-ch.RData", verbose = T) # texts on lines (udpipe)
+	# load("data-processed/tidycorpus-text-adlt.RData", verbose = T) # texts on lines (udpipe)
+	# load("data-processed/tidycorpus-text-adht.RData", verbose = T) # texts on lines (udpipe)
+	load(paste0("data-processed/tidycorpus-text-", cond, ".RData"), verbose = T) # texts on lines (udpipe)
 	freqmat_l <- getFreqMat(text_df2, opts) # lemma
 	# save(freqmat_l, file = "data-processed/freqmat_l_lemma.RData")
 }
 
 # apply normalisation like in childLex
-freqmat_l$ai_norm <- 1000000 * freqmat_l$ai_freq / (sum(freqmat_l$ai_freq))
+# freqmat_l$ai_norm <- 1000000 * freqmat_l$ai_freq / (sum(freqmat_l$ai_freq))
+freqmat_l$ai_normplus1 <- 1000000 * (freqmat_l$ai_freq + 1) / (sum(freqmat_l$ai_freq))
+
+# freqmat_l$ai_norm_log <- log(freqmat_l$ai_norm)
+freqmat_l$ai_norm_log <- log(freqmat_l$ai_normplus1)
+
 # freqmat_l <- freqmat_l %>% filter(ai_norm > MIN_FREQUENCY)
 freqmat_l <- freqmat_l %>% arrange(desc(ai_norm))
-# head(freqmat_l)
-# nrow(freqmat_l) 
 
-# save(freqmat_l, file = "data-processed/freqmat_l_lemma.RData")
-# save(freqmat_l, file = "data-processed/freqmat_l_lemma-3.5.RData")
-# save(freqmat_l, file = "data-processed/freqmat_l-types.RData")
-# save(freqmat_l, file = "data-processed/freqmat_l-types-3.5.RData")
-# save(freqmat_l, file = "data-processed/freqmat_l-types-3.5-PUNC.RData")
+# save(freqmat_l, file = "data-processed/freqmat_l_lemma-3.5.RData") # used for table
+# save(freqmat_l, file = "data-processed/freqmat_l_lemma-adlt.RData") # used for table
+# save(freqmat_l, file = "data-processed/freqmat_l_lemma-adht.RData") # used for table
+
+# save(freqmat_l, file = "data-processed/freqmat_l-types-3.5-PUNC.RData") # used for table
+# save(freqmat_l, file = "data-processed/freqmat_l-types-adlt.RData") # used for table
+# save(freqmat_l, file = "data-processed/freqmat_l-types-adht.RData") # used for table
+
+save(freqmat_l, file = paste0("data-processed/freqmat_l-", wordtype, "-", cond, ".RData")) # used for table
+
 # load(file = "data-processed/freqmat_l-types-3.5.RData", verbose = T)
 # load(file = "data-processed/freqmat_l-types-3.5-PUNC.RData", verbose = T)
+# load(file = "data-processed/freqmat_l-types-adht.RData", verbose = T)
+
+# freqmat_l$cond <- cond
+ftables[[cond]] <- freqmat_l # trees with head annotation
+
+# end for loop
+}
+
+# word	count	frequency_per_million	log_frequency_per_million
+
+ftables_with_source <- Map(function(tbl, cond) {
+    tbl$Source <- cond  # Add a new column with the condition as the source identifier
+    return(tbl)
+}, ftables, conditions)
+
+for(cond in conditions) {
+ftables[[cond]] %>% mutate(ai_norm = round(ai_norm, digits = 2),
+										ai_norm_log = round(ai_norm_log, digits = 4)) %>%
+	rename(word = type,
+										count = ai_freq,
+										frequency_per_million = ai_norm,
+										log_frequency_per_million = ai_norm_log) %>% 
+	write.csv(paste0("data-processed/", cond,".csv"), row.names = F)
+}
+
+all_data <- do.call(rbind, ftables_with_source)
+all_data %>% mutate(ai_norm = round(ai_norm, digits = 2),
+										ai_norm_log = round(ai_norm_log, digits = 4)) %>%
+	rename(word = type,
+										count = ai_freq,
+										frequency_per_million = ai_norm,
+										log_frequency_per_million = ai_norm_log) %>% 
+	write.csv("data-processed/all_data.csv", row.names = F)
 ```
 
 ```{r, eval=FALSE}
@@ -125,7 +188,8 @@ head(freqmat_l[order(freqmat_l$ai_freq, decreasing = T),], 10)
 head(freqmat_l[order(freqmat_l$ai_freq, decreasing = F),], 10)
 ```
 
-## Load human frequency list 
+
+## Merge and load human frequency list 
 
 ```{r}
 library(readxl)
@@ -135,9 +199,10 @@ getChildLex <- function(sheet = 1){
 		summarise(.by = type,
 		# summarise(.by = lemma,
 							# childlex_norm = lemma.norm[1],					
-							childlex_norm = type.norm[1],
-							# childlex_norm = sum(atype.norm),
+							# childlex_norm = type.norm[1],
+							childlex_norm = sum(atype.norm),
 							n_pos = n())
+	MIN_FREQUENCY = 0
 	childLexAgg <- childLexAgg %>% filter(childlex_norm > MIN_FREQUENCY)
 	# childLexAgg <- rename(childLexAgg, type = lemma)
 }
@@ -155,10 +220,11 @@ getChildLexLemma <- function(sheet = 1){
 	# childLexAgg <- rename(childLexAgg, type = lemma)
 }
 
+MIN_FREQUENCY = 0
 xlsx = "data-original/childLex/childLex_0.17.01c_2018-12-24_schr.xlsx"
 # read_xlsx(xlsx, sheet = 1, range = cell_cols("A:I"))
 # https://drive.google.com/open?id=1OKdYErf1q3RzNXx_WyOnA4jq3uZqu6l_
-
+wordtype = "type"
 if (wordtype == "type") { # 164k in excel file and 182k in ms table?
 	childLexAgg <- getChildLex(excel_sheets(xlsx)[1]) # 158,398
 	childLexAgg6 <- getChildLex(excel_sheets(xlsx)[2])
@@ -183,39 +249,48 @@ if (wordtype == "type") { # 164k in excel file and 182k in ms table?
 # freqmat_l[freqmat_l$type == "beginnen",]
 # merged_lit[merged_lit$target == "beginnen",]
 # litkeya[litkeya$target == "beschlossen", ]
+load("data-processed/litkey.RData", verbose = T)
+litkey <- litkey %>% distinct()
 
 # load(file = "data-processed/freqmat_l-types-3.5.RData", verbose = T)
-load(file = "data-processed/freqmat_l-types-3.5-PUNC.RData", verbose = T)
-if (wordtype == "type") {
-	load("data-processed/litkey.RData", verbose = T)
-	litkey <- litkey %>% distinct()
-	merged_lit <- inner_join(litkey, freqmat_l, join_by(target == type))
-	merged_litx <- full_join(litkey, freqmat_l, join_by(target == type))
-	merged_dfx <- full_join(childLexAgg, freqmat_l, join_by(type == type))
-	merged_df <- inner_join(childLexAgg, freqmat_l, join_by(type == type))
-	merged_df_ch <- left_join(childLexAgg, freqmat_l, join_by(type == type))
-	merged_df6 <- inner_join(childLexAgg6, freqmat_l, join_by(type == type))
-	merged_df9 <- inner_join(childLexAgg9, freqmat_l, join_by(type == type))
-	merged_df11 <- inner_join(childLexAgg11, freqmat_l, join_by(type == type))
-	merged_lit_ch <- inner_join(merged_lit, childLexAgg, join_by(target == type))
-	# save(merged_df,    file = "data-processed/merged_df-type.RData")
-	# save(merged_df,    file = "data-processed/merged_df-type-3.5.RData")
-	# save(merged_df_ch, file = "data-processed/merged_df-type-3.5-ch.RData")
-	# save(merged_dfx,   file = "data-processed/merged_df-type-3.5-full.RData")
+# load(file = "data-processed/freqmat_l-types-3.5-PUNC.RData", verbose = T)
+
+conditions = c("adlt", "adht", "chlt", "chht")
+for(cond in conditions) {
+	print(cond)
+	load(file = paste0("data-processed/freqmat_l-types-", cond, ".RData"), verbose = T)
 	
-	# save(merged_litx, file = "data-processed/merged_lit-type-3.5-full.RData")
-	# save(merged_litx, file = "data-processed/merged_lit-type-3.5-full-NAMES.RData")
-	# save(merged_lit,  file = "data-processed/merged_lit-type.RData")
-	# save(merged_lit,  file = "data-processed/merged_lit-type-3.5.RData")
-} else {
-	load("data-processed/litkey-lemma.RData", verbose = T)
-	merged_lit <- inner_join(litkey2, freqmat_l, join_by(chl_lemma == type))
-	merged_df <- inner_join(childLexAgg, freqmat_l, join_by(lemma == type))
-	merged_df6 <- inner_join(childLexAgg6, freqmat_l, join_by(lemma == type))
-	merged_df9 <- inner_join(childLexAgg9, freqmat_l, join_by(lemma == type))
-	merged_df11 <- inner_join(childLexAgg11, freqmat_l, join_by(lemma == type))
-	merged_lit_ch <- inner_join(merged_lit, childLexAgg, join_by(chl_lemma == lemma))
-	# save(merged_df, file = "data-processed/merged_df-lemma.RData")
+	wordtype = "type"
+	if (wordtype == "type") {
+		merged_lit <- inner_join(litkey, freqmat_l, join_by(target == type))
+		merged_litx <- full_join(litkey, freqmat_l, join_by(target == type))
+		merged_dfx <- full_join(childLexAgg, freqmat_l, join_by(type == type)) # used for plotting
+		# merged_df <- inner_join(childLexAgg, freqmat_l, join_by(type == type))
+		# merged_df_ch <- left_join(childLexAgg, freqmat_l, join_by(type == type))
+		merged_df6 <- inner_join(childLexAgg6, freqmat_l, join_by(type == type))
+		merged_df9 <- inner_join(childLexAgg9, freqmat_l, join_by(type == type))
+		merged_df11 <- inner_join(childLexAgg11, freqmat_l, join_by(type == type))
+		merged_lit_ch <- inner_join(merged_lit, childLexAgg, join_by(target == type))
+		# save(merged_df,    file = "data-processed/merged_df-type-3.5.RData")
+		# save(merged_df_ch, file = "data-processed/merged_df-type-3.5-ch.RData")
+		# save(merged_dfx,   file = "data-processed/merged_df-type-3.5-full-NAMES.RData") # old file that experimented with excluding names
+		# save(merged_dfx,   file = "data-processed/merged_df-type-3.5-full.RData") # used for plotting
+		save(merged_dfx,   file = paste0("data-processed/merged_df-type-", cond, ".RData")) # used for plotting
+		
+		# save(merged_litx, file = "data-processed/merged_lit-type-3.5-full.RData")
+		# save(merged_litx, file = "data-processed/merged_lit-type-3.5-full-NAMES.RData")
+		# save(merged_lit,  file = "data-processed/merged_lit-type.RData")
+		# save(merged_lit,  file = "data-processed/merged_lit-type-3.5.RData")
+	} else {
+		load("data-processed/litkey-lemma.RData", verbose = T)
+		merged_lit <- inner_join(litkey2, freqmat_l, join_by(chl_lemma == type))
+		merged_df <- inner_join(childLexAgg, freqmat_l, join_by(lemma == type))
+		merged_df6 <- inner_join(childLexAgg6, freqmat_l, join_by(lemma == type))
+		merged_df9 <- inner_join(childLexAgg9, freqmat_l, join_by(lemma == type))
+		merged_df11 <- inner_join(childLexAgg11, freqmat_l, join_by(lemma == type))
+		merged_lit_ch <- inner_join(merged_lit, childLexAgg, join_by(chl_lemma == lemma))
+		# save(merged_df, file = "data-processed/merged_df-lemma.RData")
+	}
 }
 
 # merged_lit <- inner_join(litkey2, freqmat_l, join_by(chl_lemma == type))
@@ -230,8 +305,51 @@ if (wordtype == "type") {
 # dpi # does not change html display but figure is double the size
 # fig.width # how much space the figure uses
 
+# as saved above 
 load(file = "data-processed/merged_df-type-3.5-full.RData", verbose = T)
-merged_df <- merged_dfx
+
+# data from cormat.R
+load("data-processed/all_wider_again_subt_ch_plus1_prob.RData", verbose = T)
+
+aap <- t(all_wider_againl %>% filter(merged_type == "namens"))
+
+merged_df <- merged_dfx # 172747
+summary(merged_df)
+
+fromexp2 <- all_wider_againl %>% # 371415
+	select(merged_type, 
+				 value_ai_freq, value_chcount, 
+				 norm_ai_freq, norm_chcount, 
+				 norm_logcountplus1_ai_freq, norm_logcountplus1_chcount) %>%
+	rename(
+		childlex_norm = norm_chcount,
+		ai_norm = norm_ai_freq)
+
+merged_df <- fromexp2 %>%  # 172747
+	filter(!rowSums(select(., starts_with("value_")) == 0) == length(select(., starts_with("value_"))))
+
+fromexp2 <- all_wider_againl %>% # 371415
+	select(merged_type, 
+				 
+				 # value_ai_freq, 
+				 value_chcount, 
+				 value_adht, value_adlt,
+				 value_chht, value_chlt,
+				 
+				 norm_ai_freq, norm_chcount, 
+				 
+				 norm_logcountplus1_ai_freq, norm_logcountplus1_chcount,
+				 norm_logcountplus1_adht, norm_logcountplus1_adlt,
+				 norm_logcountplus1_chht, norm_logcountplus1_chlt) %>%
+	rename(
+		childlex_norm = norm_chcount,
+		ai_norm = norm_ai_freq)
+
+forexp2 <- fromexp2 %>%  # 172747
+	filter(!rowSums(select(., starts_with("value_")) == 0) == length(select(., starts_with("value_"))))
+
+save(merged_df, file = "basedonexp2.RData")
+save(forexp2, file = "forexp2.RData")
 
 MIN_FREQUENCY_COR <- 0
 
@@ -262,25 +380,30 @@ merged_df %>%
 	with(cor(childlex_norm, ai_norm, use = "complete.obs"))
 
 
+# load("data-processed/merged_df-type-3.5-full-NAMES.RData", verbose = T)
 # load("data-processed/merged_df-type-3.5-full.RData", verbose = T)
-load("data-processed/merged_df-type-3.5-full-NAMES.RData", verbose = T)
-merged_df <- merged_dfx
-# merged_df[merged_df$type == "Oma",]
-merged_df$ai_norm[is.na(merged_df$ai_norm)] = .1
-merged_df$childlex_norm[is.na(merged_df$childlex_norm)] = .1
-cor.test(merged_df$childlex_norm, merged_df$ai_norm) # .88
-cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) # .59 172747 rows WITH NAMES AND PUNC
-cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) # .59 173253 rows NO NAMES WITH PUNC
-cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) # .33 221267 rows NO NAMES NO PUNC
+# merged_df <- merged_dfx
 
-load("data-processed/merged_df-type-3.5.RData", verbose = T)
+# merged_df[merged_df$type == "Oma",]
+
+# merged_df$ai_norm[is.na(merged_df$ai_norm)] = .1
+# merged_df$childlex_norm[is.na(merged_df$childlex_norm)] = .1
 cor.test(merged_df$childlex_norm, merged_df$ai_norm) # .88
-cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) #.67, 31410 rows
+# cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) # .59 172747 rows WITH NAMES AND WITH PUNC
+# cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) # .59 173253 rows NO NAMES WITH PUNC
+# cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) # .33 221267 rows NO NAMES NO PUNC
+cor.test(merged_df$norm_logcountplus1_chcount, merged_df$norm_logcountplus1_ai_freq) # .59
+
+# load("data-processed/merged_df-type-3.5.RData", verbose = T)
+
+cor.test(merged_df$childlex_norm, merged_df$ai_norm) # .88
+# cor.test(log(merged_df$childlex_norm), log(merged_df$ai_norm)) #.67, 31410 rows
 # x <- read_csv("data-processed/job_cor_comp_df.csv") # 1152 rows
 ```
 
 ```{r}
 # Correlations depending on subsets of frequency list
+
 # subset_sizes <- seq(100, nrow(merged_df), by = 10)
 subset_sizes <- seq(100, nrow(merged_df), length.out = 400)
 length(subset_sizes)
@@ -309,6 +432,7 @@ p
 
 ```{r}
 # Correlations depending on subsets of texts
+
 # run cor_sim.R
 # load("data-processed/cors_sim_many.RData", verbose = T)
 # load("data-processed/cors_sim_many-3.5.RData", verbose = T)
@@ -329,180 +453,57 @@ ggplot(cors_sim, aes(x = subset_sizes, y = cor_coeffs)) +
 
 
 ```{r, out.width = "100%", fig.width=7, dpi = 300, echo=T, eval = T}
-scatterPlot <- function(temp = merged_df, x_label, y_label, datap){
-	# temp = merged_df
-	# x_label <- "ChildLex-based (6-12 y/o children) type frequency (ppm)"
-	# y_label <- "LLM-based type frequency (ppm)"
-	# temp <- merged_df %>% dplyr::select(type, ai_norm, childlex_norm) %>% rename("type" = 1, "x" = 2, "y" = 3)
-	n <- 5
-	important1 <- temp %>% 
-		filter(x > MIN_FREQUENCY_LABEL) %>%
-		filter(y > MIN_FREQUENCY_LABEL) %>%
-	  # mutate(lsqd = abs(log10(x) - log10(y))) %>%
-		mutate(lsqd2 = log10(x) - log10(y)) %>% 
-	  slice_max(n = n, order_by = lsqd2)
-	important2 <- temp %>% 
-		filter(x > MIN_FREQUENCY_LABEL) %>%
-		filter(y > MIN_FREQUENCY_LABEL) %>%
-	  # mutate(lsqd = abs(log10(x) - log10(y))) %>%
-		mutate(lsqd2 = log10(x) - log10(y)) %>% 
-	  slice_min(n = n, order_by = lsqd2)
-	important <- rbind(important1, important2)
+x_label <- "ChildLex-based (6-12 y/o children) type frequency (ppm)"
+y_label <- "LLM-based type frequency (ppm)"
 
-	# Compute 2d density estimate 
-	# also works, but less beautiful
-	# library(MASS)
-	# dens <- MASS::kde2d(log10(temp$x), log10(temp$y), n = 200)
-	# dens_df <- data.frame(expand.grid(x = 10^dens$x, y = 10^dens$y), z = as.vector(dens$z))
-	# quantile_level <- quantile(dens_df$z, probs = 0.82)
-	 
-	## better, but removed for now
-	library(ks)
-# 	# d <- temp %>% dplyr::select(x, y) %>% mutate(x = log10(x), y = log10(y))
-# 	d <- temp %>% dplyr::select(x, y)
-#   # kd <- ks::kde(d, compute.cont=TRUE, xmin = c(0,0), positive = T)
-#   kd <- ks::kde(d, compute.cont=TRUE, h=.01, positive = T, xmin = c(.1,.1))
-#   get_contour <- function(kd_out=kd, prob="5%") {
-#   	kd_out = kd
-#   	contour_95 <- with(kd_out, contourLines(
-#   		x=eval.points[[1]],
-#   		y=eval.points[[2]],
-#   		z=estimate,
-#   		levels=cont[prob])[[1]])
-#   	as_tibble(contour_95) %>% mutate(prob = as.factor(prob))
-#   }
-#   # sum(temp$x < 5) / length(temp$x)
-#   dat_out <- map_dfr(c("1%", "10%", "50%", "70%"), ~get_contour(kd, .)) %>%
-#   	group_by(prob) %>%
-#   	mutate(n_val = 1:n()) %>%
-#   	ungroup()
-#  	dat_out2 <- filter(dat_out, !n_val %in% 1:3)
-
-	# summary(dat_out)
-	## clean kde output
-	# kd_df <- expand_grid(x=kd$eval.points[[1]], 
-	# 										 y=kd$eval.points[[2]]) %>% 
-	# 	mutate(z = c(kd$estimate %>% t))
-	# kd_df
-
-	ggplot(temp, aes(x = x, y = y)) +
-		## AB LINE 
-		geom_abline(color="#B8B8B8", linewidth = .3, linetype = 1) +
-		
-		## POINTS
-		# geom_jitter(color="grey40", alpha = .1, size = .1, width = 0.12, height = 0.12) +  # add jitter
-		# geom_pointdensity(size = .5, adjust = 1) + scale_color_viridis_c() +
-		geom_bin_2d(bins = 100, show.legend = T) + 
-		# scale_fill_continuous(type = "viridis") +
-		# scale_fill_viridis(limits=c(0,50), breaks=seq(0, 40, by=10)) + 
-		# scale_fill_viridis(limits=c(0,512), breaks=rev(512 - c(0, 1, 2, 4, 8, 16, 32, 64, 128, 256))) +
-		# scale_fill_viridis(limits=c(0,50), breaks=c(0, 1, 2, 4, 8, 16, 32)) + 
-		# datap = 50
-		scale_fill_viridis(limits=c(-2, datap), trans = "log10", name = "Count") +
-		# scale_fill_gradientn(limits=c(0,50), breaks=seq(0, 40, by=10), colours=rainbow(4)) + 
-		
-		## SMOOTH 
-		# geom_smooth(method = "loess", span = 1, se = F, linewidth = .4, colour = I("red")) +
-		# geom_smooth(method = "lm", se = T, linewidth = .4, colour = I("red")) +
-		
-		## CONTOUR
-		# less nice
-		# geom_contour(data = dens_df, 
-		# 						 aes(x = x, y = y, z = z), 
-		# 						 breaks = quantile_level,
-		# 						 linewidth = .5) +
-	
-		# nicer
-		# geom_path(aes(x, y, group = prob),
-		# 					data = dat_out2, colour = I("green"),
-		# 					linewidth = .4) +
-		# geom_text(aes(label = prob),
-		# 					data = filter(dat_out, (prob %in% c("1%", "10%", "50%") & n_val==331)), 
-		# 					colour = I("blue"), 
-		# 					size = I(5)) +
-		# filter(dat_out, (prob %in% c("1%") & n_val==10))
-
-		## DENSITY
-		# stat_ellipse(linewidth = 2, color = "red", type = "norm", linetype = 2) +
-		# stat_ellipse(linewidth = 2, color = "green", type = "t", linetype = 2) +
-		# stat_ellipse(linewidth = .5, color = "red", type = "norm", linetype = 2, size = ) +
-		# stat_ellipse(aes(x = x, y = x), linewidth = .5, color = "blue") +
-		# stat_ellipse(type = "euclid", linewidth = .5, level = 2, color = "green") +
-		# geom_density_2d(linewidth = .5, color = "red", type = "t", linetype = 1, bins = 1000) + 
-		# 	geom_density_2d(
-		#     mapping = aes(color = after_stat(level),
-		#     							x = log10(x), y = log10(y)),  # Color the contours by their density levels
-		#     # size = c(0.1, 2),  # Set the sizes of the contour lines
-		#     binwidth = .1,
-		#     linewidth = 0.5,  # Set the sizes of the contour lines
-		#     n = 100  # Number of points to use for density estimation
-		#   ) +
-		# scale_color_gradient(low = "blue", high = "red") +  # Color scale for contours
-	
-	  ## WORDS
-		geom_text_repel(
-	    data = important,
-	    aes(label = type,
-	    		colour="white", 
-	    		segment.colour="red",
-	    		segment.size=.4),
-	    size = 3,
-	    color = "red",
-	    min.segment.length = 0,
-	    # nudge_x = -.5,
-	    # nudge_y = .5,
-	    # force = 50,
-	    max.iter = 5000,
-	    verbose = T
-	  ) + 
-		
-		my_theme +
-		coord_fixed(ratio = 1) +
-		# theme(aspect.ratio=1)
-	  labs(x = x_label, y = y_label)  + 
-		theme(
-				plot.margin = margin(.5, .5, .5, .5, "cm"), 
-			  # plot.margin=grid::unit(c(0,0,0,0), "mm"),
-				# title = element_text(size = rel(1)),
-    		# legend.title.align = 0,
-    		legend.position = "bottom", 
-				# legend.position = c(.99, .99), legend.justification = c(1, 1), 
-    		legend.justification = "centre",
-    		legend.direction = "horizontal",
-				legend.background = element_rect(color = "white", fill = "white"),
-				legend.title = element_text(size = rel(.8)),
-				# legend.key.size = element_text(size = rel(.65)),
-				# legend.key = element_text(size = rel(.65)),
-				legend.text = element_text(size = rel(.55))) + 
-		scale_x_continuous(trans = "log10", 
-											 # breaks = c(5, 10, 50, 100, 500, 1000, 5000, 10000),
-											 breaks = c(.1, 1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000),
-											 labels = c(0.1, 1, 5, 10, 50, 100, 500, "1k", "5k", "10k", "50k"),
-											 expand = c(0, 0),
-											 limits = c(.05, MAX_FREQUENCY)) + # 2.5 for litkey, .05 for childlex
-											 # limits = c(2.5, MAX_FREQUENCY)) + # 2.5 for litkey, .05 for childlex
-		scale_y_continuous(trans = "log10", 
-											 breaks = c(0.1, 1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000),
-											 labels = c(0.1, 1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000),
-											 expand = c(0, 0),
-											 limits = c(0.05, MAX_FREQUENCY))
-}
-# load("data-processed/merged_df-type.RData")
-# load("data-processed/merged_df-type-3.5.RData")
-# load("data-processed/merged_df-type-3.5-ch.RData", verbose = T)
+source("r-code/scatterPlots.R")
 # load("data-processed/merged_df-type-3.5-full.RData", verbose = T)
-load("data-processed/merged_df-type-3.5-full-NAMES.RData", verbose = T)
-merged_df <- merged_dfx
-merged_df$ai_norm[is.na(merged_df$ai_norm)] = .1
-merged_df$childlex_norm[is.na(merged_df$childlex_norm)] = .1
-xlabel <- "ChildLex-based (6-12 y/o children) type frequency (ppm)"
-ylabel <- "LLM-based type frequency (ppm)"
-# a <- merged_df %>% mutate(diff = childlex_norm - ai_norm) %>% 
-# 	dplyr::select(type, childlex_norm, diff)
-a <- merged_df %>% dplyr::select(type, childlex_norm, ai_norm)
-p <- scatterPlot(a %>% rename("type" = 1, "x" = 2, "y" = 3), xlabel, ylabel, datap = 50000)
+# load(file = "all_wider_again.csv", verbose = T)
+# load("basedonexp2.RData", verbose = T)
+load("forexp2.RData", verbose = T)
+
+colnames(forexp2)
+all_longer_again <- forexp2 %>% 
+	select(c(norm_logcountplus1_chcount, 
+					 norm_logcountplus1_adht,
+					 norm_logcountplus1_adlt, 
+					 norm_logcountplus1_chht, 
+					 norm_logcountplus1_chlt, 
+					 merged_type)) %>%
+	pivot_longer(cols = c(norm_logcountplus1_adht,
+												norm_logcountplus1_adlt, 
+												norm_logcountplus1_chht, 
+												norm_logcountplus1_chlt), 
+							names_to = "corpus", values_to = "norm_logcountplus1_ai")
+# all_longer_again
+a <- all_longer_again %>% rename("type" = merged_type, "x" = norm_logcountplus1_chcount, "y" = norm_logcountplus1_ai)
+
+# a <- a[1:1000,]
+# summary(a)
+p <- scatterPlotFacets(a, x_label, y_label, datap = 50000)
+# ggsave(p, filename = paste("figures/scatterplotfacets.pdf", sep = ""), 
+			 # scale = 1, width = 3.5, height = 4)
+ggsave(p, filename = paste("figures/scatterplotfacets.pdf", sep = ""), 
+			 scale = 1, width = 9, height = 9) 
+
+b <- a %>% filter(x > 1000 & y > 1000)
+b <- a %>% filter(x > 5 & y > 5)
+p <- scatterPlotFacetsZoom(b , x_label, y_label, datap = 50000)
+# ggsave(p, filename = paste("figures/scatterplotfacets.pdf", sep = ""), 
+			 # scale = 1, width = 3.5, height = 4) # final
+ggsave(p, filename = paste("figures/scatterplotfacetszoom.pdf", sep = ""), 
+			 scale = 1, width = 9, height = 9) # final
+
+load("basedonexp2.RData", verbose = T)
+tibble(merged_df)
+
+a <- merged_df %>% dplyr::select(merged_type, norm_logcountplus1_chcount, norm_logcountplus1_ai_freq)
+p <- scatterPlot(a %>% rename("type" = merged_type, 
+															"x" = norm_logcountplus1_chcount, 
+															"y" = norm_logcountplus1_ai_freq), 
+								 x_label, y_label, datap = 50000)
 p
-# p + geom_smooth(data = ggplot_build(p)$data[[1]], mapping = aes(x=10^x, y= 10^y),method = "lm",se=FALSE)
+ggsave(p, filename = paste("figures/scatterplotexp1.pdf", sep = ""), scale = 1, width = 3.5, height = 4)
 # ggsave(p, filename = paste("figures/for 6-12ChildLexLLM.pdf", sep = ""), scale = 1, width = 4, height = 4)
 # ggsave(p, filename = paste("figures/for 6-12ChildLexLLMlemma.pdf", sep = ""), scale = 1, width = 4, height = 4)
 # ggsave(p, filename = paste("figures/for 6-12ChildLexLLM-3.5.pdf", sep = ""), scale = 1, width = 4, height = 4)
@@ -521,27 +522,52 @@ p
 # 							rename("type" = 1, "x" = 2, "y" = 3), 
 # 						"ChildLex-based (11-12 y/o children) type frequency", 
 # 						"LLM-based type frequency (ppm)")
+
 # scatterPlot(merged_lit %>% select(target, litkey_norm_childlex, litkey_norm_children) %>% 
 # 							rename("type" = 1, "x" = 2, "y" = 3), 
 # 						"ChildLex-based (6-12 y/o children) type frequency",  
 # 						"Litkey-based type frequency")
+```
 
+
+
+
+
+
+```{r}
+# litkey
 # load("data-processed/merged_lit-type.RData", verbose = T)
 # load("data-processed/merged_lit-type-3.5.RData", verbose = T)
-# load("data-processed/merged_lit-type-3.5-full.RData", verbose = T)
-load("data-processed/merged_lit-type-3.5-full-NAMES.RData", verbose = T)
+# load("data-processed/merged_lit-type-3.5-full-NAMES.RData", verbose = T)
+load("data-processed/merged_lit-type-3.5-full.RData", verbose = T)
 
 merged_df <- merged_litx
-merged_df$ai_norm[is.na(merged_df$ai_norm)] = .1
-merged_df$litkey_norm_children[is.na(merged_df$litkey_norm_children)] = 1
-p <- scatterPlot(merged_df %>% dplyr::select(target, litkey_norm_children, ai_norm) %>%
-							rename("type" = 1, "x" = 2, "y" = 3), "Litkey-based type frequency (ppm)", "LLM-based type frequency (ppm)",
-							datap = 50)
+tibble(merged_df)
+summary(merged_df)
+sum(merged_df$litkey_abs, na.rm = T)
+sum(merged_df$ai_freq, na.rm = T)
+
+a <- merged_df %>% 
+	mutate(across(c(litkey_abs, ai_freq), ~replace_na(., 0))) %>%
+	mutate(normplus1_litkey = 1000000 * (litkey_abs + 1) / (sum(litkey_abs))) %>%
+	mutate(norm_logcountplus1_litkey = log(normplus1_litkey)) %>% 
+	mutate(normplus1_ai_freq = 1000000 * (ai_freq + 1) / (sum(ai_freq))) %>%
+	mutate(norm_logcountplus1_ai_freq = log(normplus1_ai_freq))
+summary(a)
+
+p <- scatterPlot(a %>% 
+								 	dplyr::select(target, norm_logcountplus1_litkey, norm_logcountplus1_ai_freq) %>%
+							rename("type" = target, "x" = norm_logcountplus1_litkey, "y" = norm_logcountplus1_ai_freq), 
+							"Litkey-based type frequency (ppm)", 
+							"LLM-based type frequency (ppm)",
+							datap = 50) # for scale fill viridis
 p
+# ggsave(filename = paste("figures/litkeyLLM.pdf", sep = ""), scale = 1, width = 4, height = 4)
 # ggsave(filename = paste("figures/litkeyLLM.pdf", sep = ""), scale = 1, width = 4, height = 4)
 # ggsave(filename = paste("figures/litkeyLLMlemma.pdf", sep = ""), scale = 1, width = 4, height = 4)
 # ggsave(filename = paste("figures/litkeyLLM-3.5.pdf", sep = ""), scale = 1, width = 4, height = 4)
 # ggsave(filename = paste("figures/litkeyLLM-3.5-test-3.pdf", sep = ""), scale = 1, width = 3.5, height = 4) # final
+ggsave(p, filename = paste("figures/litkey.pdf", sep = ""), scale = 1, width = 3.5, height = 4) # final
 ```
 
 
