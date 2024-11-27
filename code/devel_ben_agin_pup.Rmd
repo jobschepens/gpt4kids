@@ -1,0 +1,185 @@
+---
+title: "Experiment 1: Child directed LLM promt comparison with classic book-based frequencies"
+output: html_document
+---
+### Load libraries
+```{r}
+library(ggplot2)
+# Generate Models and estimate model fits for subset-based word frequency; Function for formula creation from text:
+formula_maker = function(dep = "x", independents="s+e"){ 
+  f = paste(dep,"~",independents) # combine depended variable and independents
+  return(as.formula(f)) # convert to formula and retun the formula object
+}
+
+# besides stargazer, cowplot and plyr should be installed
+```
+
+###Load dataset 
+
+DeveL including
+- SUBTLEX-Ger
+- LLM based Frequencies
+
+```{r}
+load("./devel-LLM_Experiment_1.RData") # DeveL Dataset
+```
+
+### Model estimation
+Linear models to estimate the change in model fit (AIC difference to a null model without word frequency) and estimated effect sizes for all *Children* from different grades (Kids) and both *Adult* groups.
+
+```{r}
+dependendents = c("log(rt.g1.m)","log(rt.g2.m)","log(rt.g3.m)","log(rt.g4.m)","log(rt.g6.m)","log(rt.ya.m)","log(rt.oa.m)")  # list of dependent variables 
+indies = c("log_frequency_per_million_b_childlex_j","log_frequency_per_million_b_dwds_j","log_frequency_per_million_b_LLM_exp1_j","log_frequency_per_million_b_subtlex_j")  # list of the four frequency variables 
+
+base_indies = "child.old20+aoa+letter.cnt" # list of the co-variates of no interest
+
+formulas = list()
+formulas_base = list()
+used_dep = list()
+used_indi = list()
+
+# generate the list of formulas for all combinations of independent and dependent variables
+for (i in 1:length(indies)) {
+  indi = paste(base_indies, "+", indies[i])
+  for (ii in 1:length(dependendents)){
+    depend = dependendents[ii]
+    used_dep = append(used_dep, depend) 
+    used_indi = append(used_indi, indies[i]) 
+    formulas = append(formulas, formula_maker(dep = depend,independents = indi))
+    formulas_base = append(formulas_base, formula_maker(dep = depend,independents = base_indies)) 
+  }
+}
+
+#create data frame to store model fit estimates
+model_comparison_df = data.frame(rt_group = unlist(used_dep), frequency_measure = unlist(used_indi), AIC = 0)
+
+# estimate model fit for all formulas
+for (i in 1:length(formulas)) {
+  model_comparison_df$AIC[i] = AIC(lm(formulas_base[[i]],data=results_merged)) - AIC(lm(formulas[[i]],data=results_merged))
+}
+model_comparison_df$pl_x = plyr::revalue(model_comparison_df$rt_group, c("log(rt.g1.m)" = "G. 1"
+                                                                         , "log(rt.g2.m)" = "G. 2"
+                                                                         ,"log(rt.g3.m)" = "G. 3"
+                                                                         ,"log(rt.g4.m)" = "G. 4"
+                                                                         ,"log(rt.g6.m)" = "G. 6"
+                                                                         ,"log(rt.ya.m)" = "Y.\nAdults"
+                                                                         ,"log(rt.oa.m)" = "O.\nAdults")
+                                         )
+desired_order = c("G. 1", "G. 2", "G. 3","G. 4","G. 6", "Y.\nAdults", "O.\nAdults")
+model_comparison_df$pl_x = factor(model_comparison_df$pl_x, levels = desired_order)
+al=.9
+model_comparison_df$pl_alpha = c(rep(al,7),rep(al,5),1,1,rep(1,4),rep(al,3),rep(al,4),1,rep(al,2))
+
+
+model_comparison_df$Measure = plyr::revalue(model_comparison_df$frequency_measure
+                                            ,c("log_frequency_per_million_b_childlex_j" = "ChildLex"
+                                               ,"log_frequency_per_million_b_dwds_j" = "DWDS"
+                                               ,"log_frequency_per_million_b_LLM_exp1_j" = "LLM"
+                                               ,"log_frequency_per_million_b_subtlex_j" = "SUBTLEX")
+                                            
+                                         )
+desired_order = c("ChildLex","DWDS","SUBTLEX","LLM")
+model_comparison_df$Measure = factor(model_comparison_df$Measure, levels = desired_order)
+
+
+#Show the AIC differences
+lex_dec_pl = ggplot(model_comparison_df, aes(y= (AIC), x= pl_x, fill=Measure,alpha = pl_alpha))+
+  geom_bar(position="dodge", stat = "identity")+
+  theme_minimal()+
+  ylab("Model fit increase [AIC relative to H0]")+
+  xlab("")+
+  scale_fill_manual(values = c("#e63946","#2a9d8f","#fb8500","#0077b6")) +
+  scale_alpha_continuous(range = c(0.3, 1)) +
+  geom_hline(yintercept = 3,color="white",lty=2)+
+  guides(alpha = FALSE)
+
+lex_dec_pl
+```
+### Model estimation for in depth analysis of the frequency effect size
+Linear models focused on the comparison between the childLex and the LLM-based word frequency effect. 
+```{r}
+#Scatterplots for to show the differences in the effect size
+g2_llm_pl = ggplot(results_merged, aes(y=log(rt.g2.m),x=log_frequency_per_million_b_LLM_exp1_j))+
+  geom_point(alpha=.1,color="darkgray")+
+  geom_smooth(method = lm, color = "#0077b6")+theme_minimal()+
+  xlim(-3,8)+ylim(7,8.2)+ylab("Response time\nGrade 2 [log. ms]")+xlab("LLM-based\nlog. frequency")
+
+g2_cl_pl = ggplot(results_merged, aes(y=log(rt.g2.m),x=log_frequency_per_million_b_childlex_j))+geom_point(alpha=.1,color="darkgray")+
+  geom_smooth(method = lm, color = "#e63946")+theme_minimal()+
+  xlim(-3,8)+ylim(7,8.2)+ylab("Response time\nGrade 2 [log. ms]")+xlab("ChildLEX-based\nlog. frequency")
+
+#estimation of the effect size for each grade
+g1_llm = lm(log(rt.g1.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_LLM_exp1_j,data=results_merged)
+
+g2_llm = lm(log(rt.g2.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_LLM_exp1_j,data=results_merged)
+
+g3_llm = lm(log(rt.g3.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_LLM_exp1_j,data=results_merged)
+
+g4_llm = lm(log(rt.g4.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_LLM_exp1_j,data=results_merged)
+
+g1_cl = lm(log(rt.g1.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_childlex_j,data=results_merged)
+
+g2_cl = lm(log(rt.g2.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_childlex_j,data=results_merged)
+
+g3_cl = lm(log(rt.g3.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_childlex_j,data=results_merged)
+
+g4_cl = lm(log(rt.g4.m) ~ child.old20 + aoa + letter.cnt #+unigram + bigram + trigram 
+       + log_frequency_per_million_b_childlex_j,data=results_merged)
+
+#preprocessing for plotting
+df_pl = data.frame(
+  EfS = c( coef(g1_llm)["log_frequency_per_million_b_LLM_exp1_j"]
+           , coef(g1_cl)["log_frequency_per_million_b_childlex_j"]
+           , coef(g2_llm)["log_frequency_per_million_b_LLM_exp1_j"]
+           , coef(g2_cl)["log_frequency_per_million_b_childlex_j"]
+           ,coef(g3_llm)["log_frequency_per_million_b_LLM_exp1_j"]
+           , coef(g3_cl)["log_frequency_per_million_b_childlex_j"]
+           , coef(g4_llm)["log_frequency_per_million_b_LLM_exp1_j"]
+           , coef(g4_cl)["log_frequency_per_million_b_childlex_j"])
+  , ci_min = c(confint(g1_llm)["log_frequency_per_million_b_LLM_exp1_j",1]
+               ,confint(g1_cl)["log_frequency_per_million_b_childlex_j",1]
+               ,confint(g2_llm)["log_frequency_per_million_b_LLM_exp1_j",1]
+               ,confint(g2_cl)["log_frequency_per_million_b_childlex_j",1]
+               ,confint(g3_llm)["log_frequency_per_million_b_LLM_exp1_j",1]
+               ,confint(g3_cl)["log_frequency_per_million_b_childlex_j",1]
+               ,confint(g4_llm)["log_frequency_per_million_b_LLM_exp1_j",1]
+               ,confint(g4_cl)["log_frequency_per_million_b_childlex_j",1])
+  , ci_max = c(confint(g1_llm)["log_frequency_per_million_b_LLM_exp1_j",2]
+               ,confint(g1_cl)["log_frequency_per_million_b_childlex_j",2]
+               ,confint(g2_llm)["log_frequency_per_million_b_LLM_exp1_j",2]
+               ,confint(g2_cl)["log_frequency_per_million_b_childlex_j",2]
+               ,confint(g3_llm)["log_frequency_per_million_b_LLM_exp1_j",2]
+               ,confint(g3_cl)["log_frequency_per_million_b_childlex_j",2]
+               ,confint(g4_llm)["log_frequency_per_million_b_LLM_exp1_j",2]
+               ,confint(g4_cl)["log_frequency_per_million_b_childlex_j",2])
+  , Grade = as.factor(c(1,1,2,2,3,3,4,4))
+  , Frequency = as.factor(rep(c("LLM","childLex"),4))
+)
+
+#figure showing the effect sizes for both measures in all grades with 95% confidence interval
+all_ef_sizes = ggplot(df_pl, aes(x = Grade, y = EfS, color = Frequency)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_min, ymax = ci_max), width = 0.2) +
+  labs(x = "Grade", y = "Frequency effect\nsize [log. ms]") +
+  theme_minimal() +
+  scale_color_manual(values = c("#e63946","#0077b6")) 
+
+cowplot::plot_grid(all_ef_sizes,g2_llm_pl,g2_cl_pl,nrow = 1, labels = "AUTO")
+
+```
+#### Code for Table 3
+```{r}
+#models without the old20 measure
+g2_llm_ = lm(log(rt.g2.m) ~ letter.cnt+ aoa + log_frequency_per_million_b_LLM_exp1_j,data=results_merged)
+g2_cl_ = lm(log(rt.g2.m) ~ letter.cnt+ aoa + log_frequency_per_million_b_childlex_j,data=results_merged)
+
+stargazer::stargazer(g2_llm,g2_cl,g2_llm_,g2_cl_, type = "text", title = "Model Output")
+```
+
