@@ -1,0 +1,401 @@
+---
+title: 'Code for Figure 7 and Figure 9 of Experiment 2 and 3'
+output:
+  html_document:
+---
+
+### Load libraries
+
+```{r}
+library(ggplot2)
+library(lme4)
+library(cowplot)
+```
+
+### Load Data - Merged dataframe including DeveL response time data and the word frequency measures
+
+```{r}
+long_merged_df = read.csv("data-fig-7-9.csv",header = T)
+summary(long_merged_df)
+```
+
+
+### Model estimation
+
+Linear mixed models to estimate the change in model fit (AIC difference to a null model without word frequency) and estimated effect sizes for *Children* (Kids) and *Adults*.
+
+#### Adult Models
+
+```{r}
+#Null Model Adults
+m0a = lmer(rt~child.old20+aoa+letter.cnt+age+(1|word)
+           ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+           )
+#DWDS Model Adults
+mSUBa = lmer(rt~child.old20+aoa+letter.cnt+age+dwds_freq_log+(1|word)
+             ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+             )
+#ChildLex Model Adults
+mCHLEXa = lmer(rt~child.old20+aoa+letter.cnt+age+childlex_freq_log+(1|word)
+               ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+               )
+#LLM Freq. Exp. 1 Model Adults
+moLLMa = lmer(rt~child.old20+aoa+letter.cnt+age+llm_freq_log+(1|word)
+              ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+              )
+#LLM Freq. Exp. 2 Model Adults: Low Temp. Adult directed
+mfltaa = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_lo_adults+(1|word)
+              ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+              )
+#LLM Freq. Exp. 2 Model Adults: High Temp. Adult directed
+mfhtaa = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_hi_adults+(1|word)
+              ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+              )
+#LLM Freq. Exp. 2 Model Adults: Low Temp. Child directed
+mfltka = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_lo_kids+(1|word)
+              ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+              )
+#LLM Freq. Exp. 2 Model Adults: High Temp. Child directed
+mfhtka = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_hi_kids+(1|word)
+              ,data=subset(long_merged_df,long_merged_df$group=="Adults")
+              )
+```
+
+#### Children Models
+
+```{r}
+#Null Model Children
+m0k = lmer(rt~child.old20+aoa+letter.cnt+age+(1|word)
+           ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+           )
+#DWDS Model Children
+mSUBk = lmer(rt~child.old20+aoa+letter.cnt+age+dwds_freq_log+(1|word)
+             ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+             )
+#ChildLex Model Children
+mCHLEXk = lmer(rt~child.old20+aoa+letter.cnt+age+childlex_freq_log+(1|word)
+               ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+               )
+#LLM Freq. Exp. 1 Model Children
+moLLMk = lmer(rt~child.old20+aoa+letter.cnt+age+llm_freq_log+(1|word)
+              ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+              )
+#LLM Freq. Exp. 2 Model Children: Low Temp. Adult directed
+mfltak = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_lo_adults+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+   )
+#LLM Freq. Exp. 2 Model Children: High Temp. Adult directed
+mfhtak = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_hi_adults+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+   )
+#LLM Freq. Exp. 2 Model Children: Low Temp. Children directed
+mfltkk = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_lo_kids+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+   )
+#LLM Freq. Exp. 2 Model Children: High Temp. Children directed
+mfhtkk = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_hi_kids+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids") 
+   )
+```
+
+#### Children Models - open models - long/short texts
+
+```{r}
+
+#LLama Freq. Exp. 3 Model Children: short text
+mllsk = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_ll_sh+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+   )
+#LLama Freq. Exp. 3 Model Children: long text
+mlllk = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_ll_lo+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+   )
+
+#DS Freq. Exp. 3 Model Children: short text
+mdssk = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_ds_sh+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids")
+   )
+
+#DS Freq. Exp. 3 Model Children: long text
+mdslk = lmer(rt~child.old20+aoa+letter.cnt+age+log_frequency_per_million_ds_lo+(1|word)
+   ,data=subset(long_merged_df,long_merged_df$group=="Kids") 
+   )
+```
+
+#### Preprocessing for plotting; Model comparison
+
+Calculation of Model fit (Delta AIC) and effect sizes (including the 95% confidence interval) for the frequency effect measured with alternative frequency measures.
+
+```{r}
+ aic_df = data.frame(deltaAIC = c(AIC(m0k) - AIC(mfltak)
+                        ,AIC(m0k) - AIC(mfhtak)
+                        ,AIC(m0k) - AIC(mfltkk)
+                        ,AIC(m0k) - AIC(mfhtkk)
+                        ,AIC(m0a) - AIC(mfltaa)
+                        ,AIC(m0a) - AIC(mfhtaa)
+                        ,AIC(m0a) - AIC(mfltka)
+                        ,AIC(m0a) - AIC(mfhtka)
+                        ,AIC(m0k) - AIC(mlllk)
+                        ,AIC(m0k) - AIC(mllsk)
+                        ,AIC(m0k) - AIC(mdslk)
+                        ,AIC(m0k) - AIC(mdssk)
+                        )
+           ,efs = c(fixef(mfltak)["log_frequency_per_million_lo_adults"]
+                        ,fixef(mfhtak)["log_frequency_per_million_hi_adults"]
+                        ,fixef(mfltkk)["log_frequency_per_million_lo_kids"]
+                        ,fixef(mfhtkk)["log_frequency_per_million_hi_kids"]
+                        ,fixef(mfltaa)["log_frequency_per_million_lo_adults"]
+                        ,fixef(mfhtaa)["log_frequency_per_million_hi_adults"]
+                        ,fixef(mfltka)["log_frequency_per_million_lo_kids"]
+                        ,fixef(mfhtka)["log_frequency_per_million_hi_kids"]
+                        ,fixef(mlllk)["log_frequency_per_million_ll_lo"]
+                        ,fixef(mllsk)["log_frequency_per_million_ll_sh"]
+                        ,fixef(mdslk)["log_frequency_per_million_ds_lo"]
+                        ,fixef(mdssk)["log_frequency_per_million_ds_sh"]
+                        )
+           , ci_min = c(confint(mfltak, level = 0.95)["log_frequency_per_million_lo_adults",1]
+                        ,confint(mfhtak, level = 0.95)["log_frequency_per_million_hi_adults",1]
+                        ,confint(mfltkk, level = 0.95)["log_frequency_per_million_lo_kids",1]
+                        ,confint(mfhtkk, level = 0.95)["log_frequency_per_million_hi_kids",1]
+                        ,confint(mfltaa, level = 0.95)["log_frequency_per_million_lo_adults",1]
+                        ,confint(mfhtaa, level = 0.95)["log_frequency_per_million_hi_adults",1]
+                        ,confint(mfltka, level = 0.95)["log_frequency_per_million_lo_kids",1]
+                        ,confint(mfhtka, level = 0.95)["log_frequency_per_million_hi_kids",1]
+                        ,confint(mlllk, level = 0.95)["log_frequency_per_million_ll_lo",1]
+                        ,confint(mllsk, level = 0.95)["log_frequency_per_million_ll_sh",1]
+                        ,confint(mdslk, level = 0.95)["log_frequency_per_million_ds_lo",1]
+                        ,confint(mdssk, level = 0.95)["log_frequency_per_million_ds_sh",1])
+  , ci_max = c(confint(mfltak, level = 0.95)["log_frequency_per_million_lo_adults",2]
+               ,confint(mfhtak, level = 0.95)["log_frequency_per_million_hi_adults",2]
+               ,confint(mfltkk, level = 0.95)["log_frequency_per_million_lo_kids",2]
+               ,confint(mfhtkk, level = 0.95)["log_frequency_per_million_hi_kids",2]
+               ,confint(mfltaa, level = 0.95)["log_frequency_per_million_lo_adults",2]
+               ,confint(mfhtaa, level = 0.95)["log_frequency_per_million_hi_adults",2]
+               ,confint(mfltka, level = 0.95)["log_frequency_per_million_lo_kids",2]
+               ,confint(mfhtka, level = 0.95)["log_frequency_per_million_hi_kids",2]
+                        ,confint(mlllk, level = 0.95)["log_frequency_per_million_ll_lo",2]
+                        ,confint(mllsk, level = 0.95)["log_frequency_per_million_ll_sh",2]
+                        ,confint(mdslk, level = 0.95)["log_frequency_per_million_ds_lo",2]
+                        ,confint(mdssk, level = 0.95)["log_frequency_per_million_ds_sh",2])
+           ,Group = as.factor(c(rep("Children RT",4),rep("Adults RT",4),rep("Children RT",4)))
+           ,Frequency = as.factor(c(rep("Adults",2),rep("Children",2),rep("Adults",2),rep("Children",2),rep("LLama",2),rep("DS",2)))
+           ,Temperature = as.factor(c(rep(c("Low","High"),4), rep("High",4)))
+)
+
+
+aic_df_kids_bl_comp_alt = data.frame(deltaAIC = c(
+                        AIC(m0k) - AIC(mfhtkk)
+                        ,AIC(m0k) - AIC(moLLMk)
+                        ,AIC(m0k) - AIC(mCHLEXk)
+                        ,AIC(m0k) - AIC(mfhtak)
+                        ,AIC(m0k) - AIC(mSUBk)
+                        )
+                        ,efs = c(fixef(mfhtkk)["log_frequency_per_million_hi_kids"]
+                        ,fixef(moLLMk)["llm_freq_log"]
+                        ,fixef(mCHLEXk)["childlex_freq_log"]
+                        ,fixef(mfhtak)["log_frequency_per_million_hi_adults"]
+                        ,fixef(mSUBk)["dwds_freq_log"]
+                        )
+           , ci_min = c(confint(mfhtkk, level = 0.95)["log_frequency_per_million_hi_kids",1]
+                        ,confint(moLLMk, level = 0.95)["llm_freq_log",1]
+                        ,confint(mCHLEXk, level = 0.95)["childlex_freq_log",1]
+                        ,confint(mfhtak, level = 0.95)["log_frequency_per_million_hi_adults",1]
+                        ,confint(mSUBk, level = 0.95)["dwds_freq_log",1]
+                        )
+  , ci_max = c(confint(mfhtkk, level = 0.95)["log_frequency_per_million_hi_kids",2]
+               ,confint(moLLMk, level = 0.95)["llm_freq_log",2]
+               ,confint(mCHLEXk, level = 0.95)["childlex_freq_log",2]
+               ,confint(mfhtak, level = 0.95)["log_frequency_per_million_hi_adults",2]
+               ,confint(mSUBk, level = 0.95)["dwds_freq_log",2]
+               )
+           ,Group = as.factor(c(rep("Children RT",5)))
+           ,Frequency = as.factor(c("Exp. 2: LLM Hi. T. Children","Exp. 1: LLM Children","childLex","Exp. 2: LLM Hi. T. Adults","DWDS"))
+)
+aic_df_adults_bl_comp_alt = data.frame(deltaAIC = c(
+                        AIC(m0a) - AIC(mfhtaa)
+                        ,AIC(m0a) - AIC(moLLMa)
+                        ,AIC(m0a) - AIC(mCHLEXa)
+                        ,AIC(m0a) - AIC(mfhtka)
+                        ,AIC(m0a) - AIC(mSUBa)
+                        )
+                        ,efs = c(fixef(mfhtaa)["log_frequency_per_million_hi_adults"]
+                        ,fixef(moLLMa)["llm_freq_log"]
+                        ,fixef(mCHLEXa)["childlex_freq_log"]
+                        ,fixef(mfhtka)["log_frequency_per_million_hi_kids"]
+                        ,fixef(mSUBa)["dwds_freq_log"]
+                        )
+           , ci_min = c(confint(mfhtaa, level = 0.95)["log_frequency_per_million_hi_adults",1]
+                        ,confint(moLLMa, level = 0.95)["llm_freq_log",1]
+                        ,confint(mCHLEXa, level = 0.95)["childlex_freq_log",1]
+                        ,confint(mfhtka, level = 0.95)["log_frequency_per_million_hi_kids",1]
+                        ,confint(mSUBa, level = 0.95)["dwds_freq_log",1]
+                        )
+  , ci_max = c(confint(mfhtaa, level = 0.95)["log_frequency_per_million_hi_adults",2]
+               ,confint(moLLMa, level = 0.95)["llm_freq_log",2]
+               ,confint(mCHLEXa, level = 0.95)["childlex_freq_log",2]
+               ,confint(mfhtka, level = 0.95)["log_frequency_per_million_hi_kids",2]
+               ,confint(mSUBa, level = 0.95)["dwds_freq_log",2]
+               )
+           ,Group = as.factor(c(rep("Adults RT",5)))
+           ,Frequency = as.factor(c("Exp. 2: LLM Hi. T. Adults","Exp. 1: LLM Children","childLex","Exp. 2: LLM Hi. T. Children","DWDS"))
+)
+```
+
+
+#### Code for Fig. 7
+
+```{r}
+al=.9
+comp_pl_df = rbind(aic_df_adults_bl_comp_alt,aic_df_kids_bl_comp_alt)
+comp_pl_df = subset(comp_pl_df,comp_pl_df$Frequency!="Exp. 2: LLM Hi. T. Adults")
+comp_pl_df = subset(comp_pl_df,comp_pl_df$Frequency!="Exp. 2: LLM Hi. T. Children")
+comp_pl_df$pl_alpha = c(rep(al,2),rep(1,2),rep(al,2))
+
+
+aic_df$Experiment = c(rep("Exp. 2",8),rep("Exp. 3",4))
+aic_df$bl_aic = c(rep(182.53071,4),rep(296.21955,4),rep("white",4))
+aic_df$bl_col = c(rep("#0077b6",4),rep("#2a9d8f",4),rep("white",4))
+aic_df$pl_alpha = c(rep(al,3),1,al,1,rep(al,3),1,rep(al,2))
+aic_df$Text = c(rep("Short",8),"Long","Short","Long","Short")
+aic_df$Frequency_efs = paste("       ",aic_df$Frequency,aic_df$Temperature,"T.",aic_df$Text)
+aic_df$Group = factor(aic_df$Group, levels = c("Children RT", "Adults RT"))
+aic_df$Group = factor(aic_df$Group, levels = c("Children RT", "Adults RT"))
+
+aic_df$Frequency_efs = as.factor(aic_df$Frequency_efs)
+aic_df$Frequency_efs = factor(aic_df$Frequency_efs,  levels = c("        Children Low T. Short"
+                                                                ,"        Children High T. Short"
+                                                                ,"        Adults Low T. Short"
+                                                                ,"        Adults High T. Short"
+                                                                ,"        LLama High T. Short"
+                                                                ,"        LLama High T. Long"
+                                                                ,"        DS High T. Short"
+                                                                ,"        DS High T. Long"
+                                                                )
+                              )
+
+hlines <- data.frame(
+  group = levels(aic_df$Group),
+  yintercept = c(182.53071, 296.21955),
+  color = c("#0077b6", "#2a9d8f")
+)
+
+
+
+aic_diff_exp2_ = ggplot(subset(aic_df,aic_df$Group=="Children RT"), aes(y= deltaAIC, x=Frequency_efs ,alpha = pl_alpha, fill=Experiment))+#
+  geom_bar(stat = "identity", position = "dodge")+
+  theme_minimal()+
+  ylab("Model fit increase\n[AIC relative to H0]")+
+  xlab("")+
+  scale_color_manual(values = c("black","black"))+
+  scale_alpha_manual(values = c(1,.7))+
+  scale_fill_manual(values = c("#FF5580","#03045e"))+  
+  facet_wrap(~Group)+
+  geom_hline(yintercept = 3,color="white",lty=2)+
+  geom_hline(yintercept = 116.34312,color="#e63946",lwd=1)+
+  geom_hline(yintercept = 182.53071,color="#0077b6",lwd=1)+
+  ylim(0,305)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  theme(legend.position = c(0, 1), 
+        legend.justification = c(0, 1),
+    legend.box.background = element_rect(fill = "white", 
+                                         color = "white", 
+                                         size = 1))+
+  scale_alpha_continuous(range = c(0.3, 1)) +
+  guides(alpha = "none")
+
+
+  
+
+all_ef_sizes_exp2 = ggplot(subset(aic_df,aic_df$Group=="Children RT"), aes(x = Frequency_efs, y = efs,alpha = pl_alpha, color=Experiment)) +#, color = Temperature
+  geom_errorbar(aes(ymin = ci_min, ymax = ci_max), width = 0.2) +
+  geom_point() + 
+  labs(x = "", y = "Frequency effect\nsize [log. ms]") +
+  theme_minimal() +ylim(-.026,0)+
+  scale_color_manual(values = c("#FF5580","#03045e")) +  
+  facet_wrap(~Group)+ theme(legend.position="none")+ 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_hline(yintercept = 0,color="white",lty=2)+
+  geom_hline(yintercept = -0.01670262,color="#0077b6",lwd=1, alpha=.8)+
+  geom_hline(yintercept = -0.02172737,color="#e63946",lwd=1, alpha=.8)+
+  scale_alpha_continuous(range = c(0.3, 1)) +
+  guides(alpha = "none")
+
+aic_diff_exp3_ = ggplot(subset(aic_df,aic_df$Group=="Adults RT"), aes(y= deltaAIC, x=Frequency_efs ,alpha = pl_alpha, fill=Experiment))+#, fill=Text
+  geom_bar(stat = "identity", position = "dodge")+
+  theme_minimal()+
+  ylab("Model fit increase\n[AIC relative to H0]")+
+  xlab("")+
+  scale_color_manual(values = c("black","black"))+
+  scale_alpha_manual(values = c(1,.7))+
+  scale_fill_manual(values = c("#FF5580"))+#  
+  facet_wrap(~Group)+
+  geom_hline(yintercept = 3,color="white",lty=2)+
+  #geom_hline(data = hlines, aes(yintercept = yintercept, color = color), show.legend = FALSE)+
+  geom_hline(yintercept = 296.21955,color="#2a9d8f",lwd=1)+
+  #geom_hline(yintercept = 182.53071,color="#0077b6",lwd=1)+
+  ylim(0,305)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  theme(legend.position = "none", 
+        legend.justification = c(0, 1),
+    legend.box.background = element_rect(fill = "white", 
+                                         color = "white", 
+                                         size = 1))+
+  scale_alpha_continuous(range = c(0.3, 1)) +
+  guides(alpha = "none")
+  
+
+  
+
+all_ef_sizes_exp3 = ggplot(subset(aic_df,aic_df$Group=="Adults RT"), aes(x = Frequency_efs, y = efs,alpha = pl_alpha, color=Experiment)) +#, color = Temperature
+  geom_errorbar(aes(ymin = ci_min, ymax = ci_max), width = 0.2) +
+  geom_point() + 
+  labs(x = "", y = "Frequency effect\nsize [log. ms]") +
+  theme_minimal() +ylim(-.026,0)+
+  scale_color_manual(values = c("#FF5580")) +  
+  facet_wrap(~Group)+ theme(legend.position="none")+ 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_hline(yintercept = -0.01630685,color="#2a9d8f",lwd=1)+
+  geom_hline(yintercept = 0,color="white",lty=2)+
+  scale_alpha_continuous(range = c(0.3, 1)) +
+  guides(alpha = "none")
+
+
+cowplot::plot_grid(aic_diff_exp2_
+                   ,aic_diff_exp3_
+                   ,all_ef_sizes_exp2
+                   ,all_ef_sizes_exp3
+                   ,nrow=2,labels = "AUTO"
+                   ,rel_widths = c(1,.7)
+                   ,rel_heights = c(1,.7))
+
+ggsave("./figures/fig7_r2_age_sep.pdf",width=5,height=7)
+```
+
+#### Preprocessing for correlation analysis and plotting
+
+Create dataframe that includes model fit estimates and % Hapax types representing the lexical richness of a corpus. 
+```{r}
+corr_aic_lex_rich = data.frame(dAIC = c(subset(aic_df,aic_df$Group=="Children RT")$deltaAIC
+                                        , subset(comp_pl_df,comp_pl_df$Group=="Children RT" & comp_pl_df$Frequency!="DWDS")$deltaAIC)
+                               , model = c(rep("GPT",4),rep("LLama",2),rep("DS",2),"GPT","ChildLex")
+                               , lexical_richness = c(34.69,38.21,33.56,38.21,33.62,34.01,58.10,46.52,33.03,48.74) # Data shown in Table 1,4, & 5
+)
+summary(corr_aic_lex_rich)
+```
+
+#### Correlation analysis
+Correlation analysis estimating the relationship of model fit and lexical richness of the corpus used for the frequency estimation. 
+```{r}
+cor(corr_aic_lex_rich$dAIC,corr_aic_lex_rich$lexical_richness)
+```
+
+#### Code for Fig. 9 - Correlation 
+
+```{r}
+ggplot(corr_aic_lex_rich, aes(y = dAIC, x = lexical_richness,color=model)) +#, color = Temperature
+  geom_point() + 
+  geom_smooth(color="black", method=lm,alpha=.3) +
+  labs(y = "Model fit [delta AIC]", x = "Lexical richness [% Hapax types]", color = "Corpus\ngenerator") +
+  theme_minimal()
+ggsave("./figures/fig9_r2_cor.pdf",width=4,height=3)
+```
