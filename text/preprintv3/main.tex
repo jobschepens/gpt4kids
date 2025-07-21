@@ -1,0 +1,1459 @@
+% for preprint:
+\documentclass[doc, a4paper, anonymous]{apa7}
+\usepackage[american]{babel}
+\usepackage{minted}
+\usepackage{amsmath} 
+\usepackage{caption} 
+\captionsetup[table]{skip=10pt}
+\usepackage{csquotes}
+% \usepackage[style=apa,sortcites=true,sorting=nyt,backend=biber]{biblatex}
+\usepackage[natbibapa]{apacite}
+% \usepackage{url}      
+% \usepackage{nameref}
+\usepackage{hyperref}
+\usepackage{placeins}
+\usepackage{geometry} 
+\usepackage{graphicx} 
+
+%% Documentclass:
+% \documentclass[OpenMind]{stjour}
+
+%% Or,
+
+% %% Manuscript, for double spaced, larger fonts
+% \documentclass[manuscript]{stjour}
+% %% Only needed if you use `manuscript' option
+% \journalname{Open Mind}
+
+% \usepackage{placeins}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% For production only, not authors:
+%%\documentclass[OpenMind,finalfonts]{stjour}
+
+%%%%%%%%%%% Please supply information %%%%%%%%%%%%%%%%%%%%%%%%%
+% \supplementslinks{dx.doi.org/10.17605/OSF.IO/WMUVJ}
+
+%% If no conflicts, this command doesn't need to be used
+%% \conflictsofinterest{}
+
+%%%%%%%%%%% to be supplied by MIT Press, only %%%%%%%%%%%%%%%%%
+
+% \citation{Niyogi, R. K., Breton, Y.-A., Solomon,
+% R. B., Conover, K.,\\ Shizgal, P., Dayan, P. (2015).\\ 
+% Optimal indolence: a normative microscopic approach to work and leisure. Open Mind 1(1):
+% 1-12.}
+
+% \received{20 October 2013}
+% \accepted{7 November 2013}
+% \published{26 January 2014}
+
+% %% DOI address:
+% \setdoi{10.1098/rsif.2013.0969}
+
+%%%%%%%% End MIT Press commands %%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% author definitions should be placed here:
+
+%% example definition
+% \def\taupav{\tau_{\mathrm{Pav}}}
+
+
+\title{Can Large Language Models generate useful linguistic corpora? A case study of the word frequency effect in young German readers}
+
+%% If shortened title for running head is needed so that the article title can fit
+%%   in the running head, use [] argument, ie,
+%%
+%%   \title[Shortened Title for Running Head]{Title of Article}
+%%   \subtitle{Subtitle Here}
+
+%%% Author/Affil
+%% Since we use \affil{} in the argument of the \author command, we
+%% need to supply another version of the author names, without \affil{}
+%% to be used for running heads:
+
+\authorsnames[1,2,3,2]{Job Schepens, Hanna Woloszyn, Nicole Marx, Benjamin Gagl}
+\authorsaffiliations{{Institute for Linguistics, University of Cologne}, {Self learning systems Lab, University of Cologne},{Mercator Institute, University of Cologne}}
+
+\leftheader{Schepens, Woloszyn, Marx, Gagl}
+
+\authornote{
+    \addORCIDlink{Job Schepens}{0000-0003-1271-2526}
+    \addORCIDlink{Nicole Marx}{0000-0002-7027-0618}
+    \addORCIDlink{Benjamin Gagl}{0000-0002-2339-6293}
+
+    We deeply thank Elen le Foil for their detailed comments and feedback, which greatly improved our work. 
+
+    Correspondence concerning this article should be addressed to Job Schepens, Institute for Linguistics, University of Cologne Albertus-Magnus-Platz, 50923 Köln, Germany. E-mail: job.schepens@uni-koeln.de}
+
+
+% \author[Job Schepens, Hanna Woloszyn, Nicole Marx, Benjamin Gagl]
+% {Job Schepens\thanks{Current address: Luxemburger Str. 299, Cologne, Germany}\affil{1},
+% Hanna Woloszyn\affil{2}, Nicole Marx\affil{3}, \\
+% \and Benjamin Gagl\affil{2}}
+
+% \affiliation{1}{Institute for Digital Humanities, University of Cologne, Cologne, Germany}
+% \affiliation{2}{Self learning systems Lab, University of Cologne, Cologne, Germany}
+% \affiliation{3}{Mercator Institute, University of Cologne, Cologne, Germany}
+
+% \correspondingauthor{Job Schepens}{job.schepens@uni-koeln.de}
+
+\keywords{Large language models, linguistic corpus, word frequency effect, lexical decision task}
+
+\abstract{
+Linguistic corpora are an essential resource in psycholinguistic research. Here, we generate new corpora using large language models (LLMs) and determine their usefulness for estimating the word frequency effect on reading performance, focusing on German children. We prompted three different LLMs to create corpora of children's stories using the titles of 500 books, mimicking an existing corpus of children's books (childLex). In Experiment 1, we found that word frequency correlated strongly between childLex and the LLM corpora, despite a lower lexical richness of LLM text. Compared to childLex, we found that the estimated effect size of the LLM-based word frequency effect was lower, but that it explained more variance in reading performance (using reaction times for about 1000 words in a lexical decision task). In Experiment 2, we found that prompting for children-directed text results in word frequency that better fits to child compared to adult reading times, and also that increasing temperature can increase lexical richness. In Experiment 3, we replicated Experiment 1 using two open-weight LLMs. Across all 10 corpora (out of which 9 were LLM-based), we found that corpora with lower lexical richness generally fit better to reaction times. We discuss the potential of this approach, considering the risks associated with utilizing highly complex large language models (LLMs).
+}
+
+    
+\begin{document}
+\maketitle
+
+In recent years, Large Language Models (LLMs) have improved quickly, enabling new ways of interaction between humans and computers \citep{bommasani_opportunities_2022} across different languages and contexts \citep{chang_when_2023, lai_chatgpt_2023}, despite their vastly non-human-like nature \citep{min_recent_2021, singhal_large_2023, evanson_language_2023, kasneci_chatgpt_2023}. LLMs are now being used in research contexts, including psycholinguistics, where they have been applied to generate predictors that explain variance in reading behavior and brain activation related to word predictability \citep{hofmann_language_2022, boeve_systematic_2024, botch_humans_2024, lopes_rego_language_2024, chandra_synthetic_2023, heilbron_lexical_2023}. This context seems promising, given that LLMs are trained on next-word predictability \citep{tay2022efficienttransformerssurvey}. Various other psycholinguistics measures have been studied using LLMs, ranging from augmentation \citep{trott_can_2024}, to semantic \citep{caucheteux_brains_2022} and syntactic processing \citep{fresen_language_2024,desbordes_dimensionality_2023}. The goodness of fit of LLMs to human reading times seems closely connected to their numbers of parameters \citep{oh_why_2023} as well as word frequency in the training data \citep{oh_frequency_2024,oh_dissociable_2025}. Here, instead of word frequency in training data, we study word frequency in corpora of texts generated by LLMs. 
+
+Word frequency plays a central role in word recognition and reading studies, as it has a large effect on both adult and child reading performance \citep{brysbaert_impact_2016,brysbaert_word_2018,gregorova_access_2023,schroter_developmental_2017, kliegl_length_2004,hawelka_dual-route_2010}. The frequency of a word is typically measured by taking large linguistic corpora and counting its occurrences \citep[e.g., see ][]{brysbaert_word_2011,baayen_celex_1993,schroeder_childlex_2015,heister_dlexdb_2011}. With ever-expanding corpora, increasingly appropriate word frequency estimates are possible, which may describe the variance in word recognition tasks better than other existing measures \citep{brysbaert_word_2011}. \textbf{In this paper, we investigate whether an LLM corpus can be used to extract a word frequency measure which may better describe the variance in word recognition performance than existing corpora.} The goal of these evaluations is to test if the integration of LLM corpora into psycholinguistic research is reasonable, potentially identifying a way of using LLM corpora for estimating specific word frequency measures for selected groups (in our case, German school children).
+
+We focus on beginning German readers for various reasons. First, we anticipate needing a smaller-sized corpus for this group. Further, it is possible to draw on two openly available datasets for evaluation. (i) childLex \citep{schroeder_childlex_2015} provides a high-quality corpus of 500 books written for children, allowing a direct comparison of LLM corpora with an existing book-based corpus. (ii) DeveL \citep{schroter_developmental_2017} provides reading performance data for a large set of words based on reaction times in a lexical decision task. We compare book-based and LLM-based word frequency to investigate which measure explains more variance in reaction times in a lexical decision task, which is often used to study reading performance.
+
+The effect of word frequency on reading performance is considered substantial and robust \citep{brysbaert_impact_2016, brysbaert_word_2018} across groups \citep[e.g.,][]{hawelka_dual-route_2010} and modalities \citep[e.g.,][]{gregorova_access_2023}. The word frequency effect describes that words that often occur (i.e., high-frequency words) are recognized faster and more accurately compared to less common words \citep[i.e., low-frequency words; ][]{adelman_contextual_2006, baayen_demythologizing_2010, brysbaert_impact_2016, gregorova_access_2023, hallin_effects_2018, lieven_input_2010, mcdonald_rethinking_2001, stokes_neighborhood_2010}. To accurately estimate word frequency, the choice of the underlying corpus is highly relevant. Previous studies have collected large numbers of books and newspapers and combined them into corpora for measuring word frequency \citep[e.g.,][]{baayen_celex_1993, heister_dlexdb_2011}. The use and validity of frequency measures depend on the source of the text. For example, Brysbaert and colleagues \citep{brysbaert_word_2011, brysbaert_word_2018} have shown that word frequency statistics based on television and movie subtitles explain more of the variance in word processing difficulty performance measures such as lexical decision response times than book-based corpora \citep[see also][]{chilson_films_2024}. The critical comparison here is based on model comparisons utilizing reading performance data; i.e., a regression model involving subtitle-based word frequency measures had a higher model fit than a book-based word frequency measure \citep[see, e.g.,][]{brysbaert_word_2011}. Thus, the corpus used to derive word frequency significantly influences the amount of variance that word frequency can explain \citep{ferrand_french_2010, keuleers_subtlex-nl_2010, van_heuven_subtlex-uk_2014}, even when carefully controlling for other essential word characteristics such as orthographic similarity to other words, age in which a word is typically acquired, and word length \citep{graf_faktorenanalyse_2005}. 
+
+Only a few linguistic corpora exist that can be used to measure word frequency related to children. These are typically based on children's books or subtitles for children's movies \citep{schroeder_childlex_2015, tellings_basilex_2014, van_heuven_subtlex-uk_2014, Korochkina_2024}. Constructing a text corpus specifically designed for children is challenging for several reasons. The number of materials developed explicitly for children is necessarily smaller than that for adults. Access to a wide range of children's literature and other resources can be limited due to, for example, questionable validity or even availability of the listed or estimated target age range. Estimating the target age can be problematic, as not all materials explicitly indicate a target age group. Finally, there are only a few available resources for text written by children themselves \citep[see, e.g.,][]{laarmann-quante_litkey_2019}. Together, these factors result in a limited and possibly biased set of language materials, which is expected to have implications for studies that use word frequency measures. 
+
+In summary, previous studies have shown that text type is important for studying the effects of word frequency on reading performance; however, corpora involving text written for children are scarce. LLMs can potentially help to better understand word frequency effects. However, little is known about the usefulness of LLM text in this regard. Our primary objective is thus to develop a measure of word frequency for children derived from LLM text and evaluate its potential usefulness for estimating word frequency effects. 
+
+Our procedure is as follows. First, we generate a corpus of texts that are based on the titles of the books contained in childLex. Then, we compare word frequency between both corpora. Finally, we utilize a large reading performance dataset (DeveL) that includes data from children, adolescents, and adults \citep{schroter_developmental_2017} to evaluate whether LLM word frequency better fits reaction times than childLex word frequency. This procedure is similar to previously performed evaluations of measures of word frequency \citep[e.g.,][]{brysbaert_word_2011, brysbaert_word_2018}. Using reaction times from a lexical decision task as a measure of reading performance is a common choice for studies on word recognition in children \citep{davies_reading_2017, monster_word_2022, van_den_boer_lexical_2012}. 
+
+
+\subsection*{Strengths and Weaknesses of using LLMs for Psycholinguistic Research}
+
+LLMs are computational models with a considerable amount of trainable parameters - in the case of ChatGPT-3.5, 175 billion \citep{brown_language_2020}. This makes the inner workings opaque, but potent for learning language-related tasks such as next-word or next-sentence prediction with high accuracy \citep[e.g.,][]{devlin2019bertpretrainingdeepbidirectional}. LLMs make use of architectural principles such as transformers and attention heads \citep{vaswani_attention_2017}; see also \citep[for an introduction]{hussain_tutorial_2024}. To be able to produce comprehensible output text, LLMs need to be trained on a vast set of data \citep{bender_dangers_2021}. 
+
+Several weaknesses of LLMs have been pointed out. Little is known about the minimal training data requirements \citep{hosseini_artificial_2022}. LLM training data is not developmentally realistic when compared to human input \citep{evanson_language_2023, warstadt_findings_2023, feng_is_2024}. Also, the required amounts of computing resources and training data can make it technically challenging to apply interventions or change aspects of the architecture or training procedure, so they are typically fine-tuned using reinforcement learning with human feedback (RLHF) to generate output that aligns with desired outcomes \citep[see][for how to remove troubling model outputs]{ouyang_training_2022}. Given the bias in the training data that is typically used, the output of LLMs is biased in favor of Western culture \citep{atari_which_2023}. Furthermore, for many LLMs, important information is unavailable, as they lack transparency \citep{liesenfeld_opening_2023, frank_openly_2023}. The lack of transparency and the considerable effort required for training these models make reproducing the models a challenging task. This also questions what kind of LLMs should be and should not be used in research or as research objects \citep{bender_dangers_2021, liesenfeld_opening_2023}. 
+
+Despite these caveats, LLMs seem to have much potential for studying word frequency \citep{oh_frequency_2024} or other psycholinguistic measures \citep{martinez2024ai}. LLMs have likely seen more words (and possibly languages) than any human. Extensive training data in combination with next-word-prediction may be a strength for estimating word frequency compared to traditional measures, since estimating the probability of words is part of how LLMs are optimized. Finally, the output of LLMs is generally flexible. It depends on the model prompt and a set of parameters \citep[for the temperature parameter: higher values lead to greater lexical diversity in the generated text, similar to exploration in humans][]{momennejad_evaluating_2023}. 
+
+% deleted: Furthermore, estimating word frequency from LLM text can be considered as near transfer (word frequency and probability are closely related). Near transfer arguably is less noisy compared to far transfer, e.g., studying language comprehension \citep{Dentella_2024}, which would be less closely related to the LLM training procedures. In addition, how often a word is present in LLM text has a good chance of being informative when planning to measure its frequency in a language. 
+
+What uses can LLMs have in research on language processing? Here, we assume that LLMs can be useful as tools, rather than a theoretical approach to language \citep[e.g., as in][]{binz2024centaur}. So far, LLMs have been used to expose necessary conditions and qualities of the learning environments for human language acquisition \citep{warstadt_findings_2023, trott_large_2023}, predict human brain responses to language \citep{tuckute_driving_2024}, estimate word predictability from sentence context \citep{hofmann_language_2022, chandra_synthetic_2023, heilbron_prediction_2021}, and explain N400 effects \citep{michaelov_strong_2024}. Such efforts emphasize the importance of human benchmarks, which are crucial for evaluating how LLM capacities align with human capabilities. LLMs also deviate from human behavior in interesting ways \citep{mahowald_dissociating_2024}. For example, LLMs have trouble with language comprehension \citep{Dentella_2024}, and LLM optimization is very different from the pressures that shape human performance \citep{mccoy_embers_2023}. Regarding child reading research, their large amount of training data and training procedures enables LLMs to represent various linguistic contexts, which may reflect exposure to words in ways that are relevant to word frequency measurement. Here, we explore the latter aspect. 
+
+\subsection*{Present study}
+
+In three studies, we investigate whether and how LLMs can generate corpora for measuring word frequency that are suitable for approximating the lexicon of young German readers. ChildLex \citep{schroeder_childlex_2015}, our reference corpus, is based on children's books. In Experiment 1, we generate a corpus modeled after childLex \citep{schroeder_childlex_2015}. To implement this, we prompt the model for child-directed stories based on the book titles included in the original corpus. In Experiment 2, we generate four additional corpora, systematically varying the target audience of the stories using different prompts (i.e., child-directed vs. adult-directed text) and also varying the model parameter responsible for lexical variability in the text output (high vs. low temperature). In Experiment 3, we again generate four new corpora using two open-weight LLMs, as well as manipulating text length (long vs. short). 
+
+
+\section{Experiment 1}
+
+After generating a corpus of LLM-based text, we evaluate it by comparing resulting word frequency measures to childLex \citep{schroeder_childlex_2015}. In the second step, we assess the word frequency measures against reading performance \citep{schroter_developmental_2017} in younger and older adults by testing which measure best explains the behavioral data. 
+
+\subsection{Method}
+
+\subsubsection*{Model choice}
+
+Despite reservations about the openness of the model \citep[see, e.g., ][]{liesenfeld_opening_2023, hussain_tutorial_2024}, we chose to use "GPT-3.5-turbo" for Experiments 1 and 2, which pointed to Snapshot Version 0301 (the first version made available). This is an efficient and optimized version of GPT-3.5, with a likely smaller number of parameters. This off-the-shelf model was usable without any initial training or setup and was stable, state-of-the-art, and affordable. In May 2023, the model showed good performance was easy to handle via an API (i.e., easy to use via Python; find the script here: \href{dx.doi.org/10.17605/OSF.IO/WMUVJ}{osf.io}, was stable (not the case with the GPT-4 version at the time), and was cost-effective (the pricing at the time of generations was \$0.002 / 1K tokens, which was more affordable than \$0.06 / 1K tokens for GPT-4). In this context, a token can be a word, part of a word, or punctuation mark. The tokenizer splits the training data into tokens by iteratively combining the most frequently adjacent pairs of tokens until it reaches a pre-specified vocabulary size. The model had a token limit of 4,096 tokens, equivalent to approximately 3,000 words. This limit included both the length of the input prompt and the generated output. The texts that we generated were substantially shorter than texts typically used to estimate word frequency, e.g., full books or films. To account for this length difference, we used the same prompt repeatedly to generate different texts – an interesting option since LLMs generate different texts for each prompt, even when the prompt remains constant. This strategy also ensured a comparable length of text generated for each book title, which could otherwise have biased the results. 
+
+\subsubsection*{LLM prompt engineering}
+
+Traditionally, word frequency is measured using books. ChildLex uses the texts of 500 popular books written for children in several different age ranges (for details, see \citep{schroeder_childlex_2015}. Titles and age ranges include such works as "Karius und Baktus" for children aged 4-6, "King-Kong, das Schulschwein" (King-Kong, the School Pig), for children aged 8-10, and "Der Fluch des Goldes" (The Golden Curse), for children aged 14-17. We decided to use the titles of these books to prompt the LLM in the direction of the themes of these books. Note that we are unaware if the LLM we used had these books as part of its large set of training data, but the likelihood that at least some of them were part of it is high, given the size of the LLM \citep{liu_datasets_2024}.  
+ 
+Using these book titles, our prompts had the following structure: \textit{4000 Wörter zu \textbf{Buchtitel} auf Deutsch für Kinder} (4000 Words on \textbf{Booktitle} in German for Children). In case the age range was known, it was added (\textit{im Alter \textbf{Altersangabe}}; at the age of \textbf{age range}), with \textbf{Booktitle} and \textbf{Altersangabe} changing for every specific book title. We deliberately kept our prompts simple to minimize prompt engineering; future studies could (and should) improve the prompts by, for example, requesting storytelling and narrative elements, providing more context, or providing information about our goal (i.e., estimating word frequency). 
+
+Since we kept the temperature set at .5, the text output was balanced between deterministic and random. It turned out that this prompt results on average in 628 words per prompt. For reasons which are unclear, the LLM produces substantially shorter stories than what is asked for in the prompt. It is possible to engineer prompts that result in longer texts, for example, by prompting to divide the story into chapters. Subjectively, the resulting texts often seem to relate to the content of these books. For example, \textit{"Es war ein sonniger Tag im Frühling und Opa Franz war im Garten beschäftigt. Er war gerade dabei, die Blumenbeete zu jäten, als er plötzlich ein seltsames Geräusch hörte. Es klang wie ein Schnauben und ein Fauchen zugleich. Verwundert drehte er sich um und sah etwas, das er zuvor noch nie gesehen hatte. Ein kleiner Drache saß auf dem Zaun und betrachtete ihn neugierig."}, which translates to \textit{"It was a sunny day in spring and Grandpa Franz was busy in the garden. He was weeding the flowerbeds when he suddenly heard a strange noise. It sounded like a snort and a hiss at the same time. Puzzled, he turned around and saw something he had never seen before. A little dragon was sitting on the fence, watching him curiously."} (See repository with all texts here: \href{dx.doi.org/10.17605/OSF.IO/WMUVJ}{osf.io})
+
+
+\subsubsection*{Corpus design}
+
+We decided to generate texts 20 times for each book title to increase representativeness and saturation  \citep[see ][]{schnell_understanding_2021}) and increase the total amount of generated text per book. To implement the repeated text generation, we set the n-parameter (number of prompts per run) to 4 and then ran the prompt five times for all 500 books. We stored the result of every prompt in a separate text file (filename: "Story\_" + N + ".txt", where N represents the number of books on the list). This way, every file included four generated texts based on the same book. Total cost was about $6,276,276 \times .002 \times 1.3 \times .001 =$ US\$ 16. We stopped text generation after this initially planned procedure was finished. 
+
+
+\subsubsection*{Word frequency estimation}
+
+We used R for most of the data analysis and Python for text generation. We used the text mining package in R \citep[tm; ][]{feinerer_text_2008} for measuring word frequency, using the default tokenizer, and removing punctuation and numbers using its "control" options. For lemmatization, we used UDPipe \citep{straka_tokenizing_2017} with the default German treebank from the Universal Dependencies project (german-gsd; \citep{mcdonald_universal_2013}. Similar to Table 2 in Schroeder et al. \citep{schroeder_childlex_2015}, we present an overview of the resulting corpus (see Table \ref{freqComp}). Note that childLex used a different linguistic pipeline for tokenization and lemmatization \citep[i.e., based on][]{jurish_word_2013, yli-jyra_tagh_2006}, as we could not reproduce the original pipeline completely. Other than that, we tried to mimic the pipeline as well as possible. 
+
+As in childLex, we kept the original capitalization (sentences, nouns, etc.), since nouns in German are always capitalized. This makes our corpus more comparable and keeps as much structure in the corpus as possible. Note that this results in tokens such as \textit{Essen} and \textit{essen} (\textit{food} and \textit{to eat} in English) in the middle of sentences to be correctly counted as different types, but also tokens such as \textit{Wahrscheinlich} and \textit{wahrscheinlich} (\textit{probably} in English) due to capitalization at the beginning of sentences. 
+We used a log-transformed and normalized word frequency measure ($\log\left(\frac{(1 + \text{frequency}) \times 10^6}{\text{corpus\_size}}\right)$), see Appendix Section~“\nameref{sec:word_freq_transform}” for more details. For similar procedures and discussion, see \citet{heister_dlexdb_2011, van_heuven_subtlex-uk_2014}.
+
+% latex table generated in R 4.3.0 by xtable 1.8-4 package
+% Tue Oct 17 12:26:04 2023
+\begin{table}[ht]
+\caption{Size and descriptive statistics of the LLM corpus compared to childLex \citep{schroeder_childlex_2015}.}
+\centering
+\begin{tabular}{lrr}
+  \hline
+Measure & childLex & LLM corpus \\ 
+  \hline
+n Books & 500 & 500 \\ 
+  Tokens & 9,850,786 & 6,252,808 \\ 
+  Types & 182,454 & 46,409 \\ 
+  Lemmas & 117,952 & 34,519 \\ 
+  \% Hapax tokens & 0.90 & 0.25 \\ 
+  \% Hapax types & 48.74 & 33.03 \\ 
+  \% Hapax lemmas & 48.30 & 33.09 \\ 
+  \% Tokens $>$ 4 & 97.89 & 99.57 \\ 
+  \% Types $>$ 4 & 26.53 & 41.81 \\ 
+  \% Lemmas $>$ 4 & 27.91 & 41.24 \\ 
+   \hline
+\end{tabular}
+\label{freqComp}
+\end{table}
+
+
+\subsubsection*{Sources for alternative word frequency measures}
+
+We focus on the comparison with childLex \citep{schroeder_childlex_2015}. We also compare LLM word frequencies to word frequency measures from a number of other lexical databases. These include: Litkey \citep{laarmann-quante_litkey_2019}, DWDS \citep{heister_dlexdb_2011}, SUBTLEX \citep{brysbaert_word_2011}, and Google Books \citep{brysbaert_impact_2016}. Litkey is a considerably smaller corpus, but see the Appendix for a comparison with Litkey (Figure \ref{fig:corlitkey}). 
+
+
+\subsubsection*{Reading performance data}
+
+We used the log-transformed lexical decision response times (RTs) on 1152 words as reading performance measures from DeveL \citep{schroter_developmental_2017}. The RTs represent the mean RT per word (N = 1152) and age group (Grade 1, 2, 3, 4, 6, younger and older adults). As is usually done, we applied a log transformation, which resulted in a more normal-like distribution of RTs and also improved model fit. Note that non-words were excluded, as the primary focus of the current analysis is the investigation of word frequency. Words in DeveL were selected in such a way that the low-frequency words (e.g., < 10 per million) accounted for only 25\% of all words (in childLex, low-frequency words account for 95\% of the words).  
+
+
+\subsection{Results}
+
+\subsubsection*{Word frequency distributions and lexical richness}
+
+We compared several statistics between the LLM corpus and childLex \citep{schroeder_childlex_2015}. The generation procedure yielded an average of 625 words per generated text, totaling 6,276,276 words. Table \ref{freqComp} shows that this is about 66\% of the size of childLex. 
+
+To compare both corpora, we needed to normalize for sample size. After dividing by the total number of unique types and lemmas, we found a relatively low portion of unique types and lemmas in the LLM corpus (see \% hapax types and lemmas in Table \ref{freqComp}). We also evaluated the type-token pattern for different hypothetical sample sizes, see the topmost green dashed growth curve in Figure \ref{fig:df.growth.intrextr}, which is similar to Figure 1 from \citep{schroeder_childlex_2015}. The growth curve for childLex is more than twice as high, showing that the LLM produces lexically less rich language, i.e., with fewer unique types. In addition to observed numbers of types for subsets of the corpus, Figure \ref{fig:df.growth.intrextr} also shows predictions based on Large Numbers of Rare Events (LNRE) models \citep{evert_simple_2004, baayen_word_2001}. These inter- and extrapolations show the expected change in lexical richness when corpus size increases. For both smaller and larger size corpora, lexical richness stays well below that of childLex. The percentage of hapax legomena (i.e., tokens occurring only once in the entire corpus) and unique types is much higher in childLex than in the LLM corpus. Words that recur at least five times (i.e., $>$ 4; see Table \ref{freqComp}) account for a larger portion in the LLM corpus. These findings provide a further indication that the LLM corpus is lexically less rich, which is in line with our subjective impression after reading the generated text. 
+ 
+\begin{figure}[!htbp]
+  \centering
+  %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[scale=.75]{figures/df.growth.intrextr-3.5.pdf}
+    \caption{The type-token growth curves based on the LLM corpora show the increase in lexical richness as the sample size gets larger. The four curves show four different lexical richness measures (y-axis) on interpolated (solid grey), extrapolated (solid red), and observed (dashed green) sample size (x-axis), as based on a finite Zipf-Mandelbrot Large Numbers of Rare Events Model \citep[LNRE model, see][]{evert_simple_2004}. The four lexical richness measures are from top to bottom: total numbers of types, numbers of types that occur at most 3, 2, and 1 times (i.e., tris legomena $V_3$, dis legomena $V_2$, and hapax legomena $V_1$).}
+    \label{fig:df.growth.intrextr}
+  %\end{minipage}
+  \hfill
+\end{figure}
+
+More generally, we can also investigate this pattern by inspecting the balance of high and low-frequency words as indicated by Zipf's law (i.e., word frequency is proportional to rank). This proportion in natural language corpora is never completely constant, so comparing the pattern across corpora can be interesting \citep[see, e.g., ][]{baayen_analyzing_2008, piantadosi_zipfs_2014, baayen_word_2001}. Figure \ref{fig:rankplot-normal} shows that Zipf's law in the LLM corpus is generally steeper compared to childLex. Previously, similar comparisons of adult-directed corpora showed the same pattern \citep[i.e., SUBTLEX and Google Book corpus, ][]{brysbaert_impact_2016}. For the LLM corpus, the slope is steeper compared to childLex, indicating that the LLM corpus includes more high-frequency words and fewer low-frequency words. Again, this finding indicates that the LLM-based text is lexically less rich.  
+
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=.7\textwidth]{figures/rankplot-normal-3.5-2.pdf}
+    \caption{Zipf's law plot shows frequency count on the y-axis and frequency rank on the x-axis with linear regression lines (dashed lines) for both the LLM corpus and childLex. The slopes are fitted to words with a frequency between 10 and 10,000. The LLM slope is more negative, indicating a higher occurrence of highly frequent words and a lower occurrence of low-frequency words.}
+    \label{fig:rankplot-normal}
+\end{figure}
+
+
+Despite differences in lexical richness, we find a correlation between word frequency measures from childLex and the LLM corpus (r=.88 for frequency per million and r=.69 for log frequency per million, see Figure \ref{fig:cor1}). The cone shape of the scatter plot (see Figure \ref{fig:cor1}) indicates that lower frequency measures are noisier (more variable) than higher word frequency measures, which makes sense, given the lower numbers of observations for low-frequency words. The relatively symmetric shape indicates that this noise is similarly distributed between both corpora. The correlation remains .88 when we include only words that occur in both corpora. The correlation based on log frequency also stays the same. The high correlation and the scatter plot illustrate the high similarity of the two measures. Comparing word frequency in this way also allows us to look at the words that differ the most in both directions. In the LLM corpus, words that are more frequent sometimes result from spillover effects from the most likely predominant English training data. For example, the German word "namens" is used more often in the LLM corpus than in childLex (1414 vs. 31 per million). This could directly have "spilled over" from the typical phrase to start a story in English: "There was an X called Y" even though "namens" is not typically used in this context in German. This result is similar to the observed losses in lexical and morphological richness in automatic machine translation \citep{vanmassenhove_machine_2021}. In contrast, word frequencies that stand out in childLex are typically associated with narrative storytelling. While this finding is unsurprising, childLex also contains some very common words that we would have expected to find more frequently in the LLM corpus. There is no clear explanation for these patterns, but some seem to indicate that childLex contains more colloquial style words (e.g., “offenbar”). Table \ref{notin} shows the most common words from both corpora that do not appear at all in the other corpus. In this table, the LLM column contains only names, which is a result of the way some common first names were removed from childLex but were kept in the LLM corpus. Unfortunately, we were not able to reconstruct the procedure used in childLex for removing given names. Table \ref{lowin} contains a more extensive analysis of such differences. 
+
+
+\begin{figure}[!htb]
+  %\centering
+  \centerline{
+    \includegraphics[width=\textwidth]{figures/scatterplotexp1.pdf}}
+    \caption{Correlation between LLM type frequency (y-axis) and childLex type frequency (x-axis; dark gray line). The labels show the top five differences on both sides (x-y and y-x). The color gradient of the dots represents the number of data points each dot represents.}
+    \label{fig:cor1}
+  %\end{minipage}
+\end{figure}
+
+\FloatBarrier
+
+% latex table generated in R 4.4.2 by xtable 1.8-4 package
+% Mon May 19 14:53:07 2025
+\begin{table*}[!htbp]
+\caption{The top frequent words that occur in only one of the two corpora, for all word lengths, and words with more than 10 characters. F represents the normalized log frequency. Some very common childLex words like "\textit{offenbar}" (\textit{evidently}), "\textit{rasch}" (\textit{quickly}), "\textit{Hoffentlich}" (\textit{Hopefully}), and "\textit{guckte}" (\textit{looked}) do not occur in the LLM corpus at all. Instead of "guckte" or "gucken", words like "angeguckt" and "abgucken" do appear in the LLM corpus. Also, common first names have been removed from childLex, but not from the LLM corpus.}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & LLM & F & LLM $>$10 & F \\ 
+  \hline
+daß & 6.1 & Hoffentlich & 4.4 & Max & 8.4 & nahegelegenen & 4.3 \\ 
+  1 & 5.1 & Brombeerkralle & 3.8 & Mia & 7.1 & Schulvampire & 4.2 \\ 
+  offenbar & 5.0 & Hosentasche & 3.7 & Tim & 7.0 & Tantenschreck & 3.9 \\ 
+  rasch & 4.9 & Augenbrauen & 3.7 & Lisa & 7.0 & SkaterBande & 3.8 \\ 
+  Eigentlich & 4.7 & Zeigefinger & 3.5 & Lena & 6.7 & ParkSheriffs & 3.8 \\ 
+  ehe & 4.5 & SternenClan & 3.5 & Anna & 6.5 & Lesefähigkeiten & 3.8 \\ 
+  Gleich & 4.4 & Olchi-Kinder & 3.5 & Emma & 6.5 & Schafgäääng & 3.7 \\ 
+  Hoffentlich & 4.4 & eingefallen & 3.4 & Tom & 6.4 & SchmuddelHund & 3.7 \\ 
+  glaub & 4.4 & kopfschüttelnd & 3.1 & Müller & 6.2 & Inselschüler & 3.7 \\ 
+  guckte & 4.3 & unwillkürlich & 3.1 & Lina & 6.1 & verwirklicht & 3.6 \\ 
+   \hline
+\end{tabular}
+\label{notin}
+\end{table*}
+
+
+
+
+\subsubsection*{Evaluating LLM word frequency using reading performance}
+
+We compared a linear regression model that included LLM word frequency measures based on the complete LLM corpus to linear regression models that included alternative word frequency measures. These other measures included childLex and two adult-directed corpora, a book-based corpus \citep[DWDS][]{heister_dlexdb_2011}, and a subtitle-based corpus \citep[SUBTLEX][]{brysbaert_word_2011}. We controlled for a number of other factors that affect reading performance, but that are not of interest to the current study: OLD20 \citep[e.g., ][]{yarkoni_moving_2008,hawelka_beyond_2013}, age of acquisition \citep[e.g., ][]{weekes_effects_2006}, word length \citep[e.g., ][]{gagl_sources_2015, huestegge_oculomotor_2009, marinus_variability_2010, zoccolotti_word_2005}, as well as phoneme count, and uni-, bi- and trigram frequency. Note that for the final analysis, we removed the phoneme count and uni-, bi-, and trigram frequency parameters due to high Variance Inflation Factors \citep{fox_generalized_1992}. We removed all predictors with a Variance Inflation Factor below 5, which can be assumed to indicate low co-linearity \citep[see][for a similar procedure]{gregorova_access_2023}. After calculating the effect sizes from the linear model, we estimated the model fit based on the Akaike Information Criterion \citep[AIC, ][]{akaike_new_1974}. To estimate the AIC, we compared the model to a baseline model without a word frequency measure. Higher AIC differences indicate increased model fit.
+
+We found that the AIC difference was largest for young readers (Grade 1-4; see Figure \ref{fig:modelcomprt}), indicating that LLM word frequency describes the word frequency effect in young readers best. For Grade 6, we found that SUBTLEX word frequency, which relied on subtitles from films and TV shows, had the highest model fit increase. Finally, book and newspaper-based word frequency from the DWDS corpus showed the highest model fit for younger and older adults, see Figure \ref{fig:modelcomprt}A. Table \ref{effsize} provides a description of model estimates, effect sizes, and the R-squared metric. When the word frequency increases from 1 to 1000, predicted RT decreases by about 250 ms. Appendix Section~“\nameref{sec:rob}” shows a robustness analysis against sample size for the correlation with childLex word frequency as well as for the model fit on reading performance. 
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=1]{figures/exp1_modelcomp.pdf}
+    \caption{Evaluation of the word frequency effect on reading performance (RTs) for beginning readers (Grades 1, 2, 3, 4, and 6), younger and older adults. AIC difference is based on an analysis comparing the word frequency effect across LLM, childLex, DWDS, and SUBTLEX word frequency measures for all age groups. Models with the highest fit for each group are highlighted (i.e., the largest AIC difference). Note that G. stands for grade, Y. for younger adults, and O. for older adults. The white dashed line near the x-axis indicates the threshold for a significant model fit increase. Note that the age groups represent different data sets and that the bars are therefore only comparable within each age group.}
+\label{fig:modelcomprt}
+\end{figure}
+
+The finding that LLM word frequency describes the word frequency effect in children best is accompanied by a reduction in effect size. When comparing the effect sizes of the word frequency effects between LLM and childLex word frequency, we found that for LLM word frequency, effect size tended to be smaller in Grades 2-4 (see Figure \ref{fig:ef_size}A). Inspecting the scatter plots of Grade 2 readers (as shown in Figure \ref{fig:ef_size}B and C and Table \ref{G2stats}; even when OLD20 is removed) shows that the reduction in effect size is the combined result of the low-frequency measures and the words not included in the LLM corpus but do exist in childLex, indicating that these words play a crucial role for the adequate estimation of the effect size of the frequency effect in young readers.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width = .8\paperwidth]{figures/exp1_ef_size.pdf}
+    % \includegraphics[width=1\textwidth]{figures/exp1_ef_size.pdf}
+    \caption{Evaluation of the word frequency effect size on reading performance (RTs) of beginning readers (Grades 1, 2, 3, and 4). (A) Effect sizes with 95\% confidence intervals for log-transformed RT for the young readers of grades 1-4 for both LLM and childLex word frequency. (B) Scatter plot including linear regression line showing the word frequency effect on RTs for grade 2 readers based on the LLM and (C) childLex corpora.}
+\label{fig:ef_size}
+\end{figure}
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Wed, Nov 27, 2024 - 13:58:36
+\begin{table}[!htbp] \centering 
+  \caption{Comparison of the linear regression model results for Grade 2 readers using either the LLM-based or the childLex-based frequency measurement. Two models included the Orthographic Levenshtein Distance (OLD20) measure, which was based on childLex, and two models did not.} 
+  \label{G2stats} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{4}{c}{\textit{Grade 2 log. transformed reaction times}} \\ 
+\cline{2-5} 
+%\\[-1.8ex] & \multicolumn{4}{c}{log(rt.g2.m)} \\ 
+\\[-1.8ex] & LLM + OLD & childLex + OLD & LLM & childLex\\ 
+\hline \\[-1.8ex] 
+log. frequency LLM & $-$0.017$^{***}$ &  & $-$0.018$^{***}$ &  \\ 
+  & (0.002) &  & (0.002) &  \\ 
+  & & & & \\ 
+ log. frequency childLex &  & $-$0.025$^{***}$ &  & $-$0.025$^{***}$ \\ 
+  &  & (0.003) &  & (0.003) \\ 
+  & & & & \\
+  Intercept & 6.977$^{***}$ & 7.045$^{***}$ & 6.983$^{***}$ & 7.052$^{***}$ \\ 
+  & (0.018) & (0.024) & (0.018) & (0.023) \\ 
+  & & & & \\ 
+  OLD20 & 0.014$^{*}$ & 0.011 &  &  \\ 
+  & (0.008) & (0.008) &  &  \\ 
+  & & & & \\ 
+ Age of Acquisition & 0.047$^{***}$ & 0.045$^{***}$ & 0.048$^{***}$ & 0.045$^{***}$ \\ 
+  & (0.003) & (0.003) & (0.003) & (0.003) \\ 
+  & & & & \\ 
+ Letter length & 0.062$^{***}$ & 0.060$^{***}$ & 0.064$^{***}$ & 0.062$^{***}$ \\ 
+  & (0.003) & (0.003) & (0.002) & (0.002) \\ 
+  & & & & \\  
+\hline \\[-1.8ex] 
+Observations & 1,152 & 1,152 & 1,152 & 1,152 \\ 
+R$^{2}$ & 0.678 & 0.672 & 0.678 & 0.672 \\ 
+AIC & -1744 & -1722 & -1743 & -1723 \\ 
+
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01.} \\ 
+\end{tabular} 
+\end{table} 
+
+
+\subsection{Summary: Experiment 1}
+
+LLM word frequency explained more variance in lexical decision response times compared to childLex word frequency, which is based on children's books. We generated the text corpus based on 500 children's book titles. In each prompt, we asked the model to compose a text for children in age-specific language, using the titles of the books contained in childLex \citep[][]{schroeder_childlex_2015}. There were two main findings. (i) Word frequency correlated strongly between corpora, despite a lower lexical richness in the LLM corpus (based on the number of distinct words and words used only once). Frequent words comprised a more significant part of the LLM corpus compared to childLex. (ii) When evaluating response times, we found that LLM word frequency describes the performance of child readers better than childLex word frequency, indicating a lower effect size than previously assumed. In summary, this study demonstrates how an LLM corpus can represent word frequency and also reveals substantial differences compared to traditional corpora. 
+
+
+\section{Experiment 2}
+
+Experiment 2 investigates two of the findings from Experiment 1 in more detail. First, we investigate how increasing the temperature parameter influences the lexical richness of the corpus. Second, we investigate how prompting for child-directed vs adult-directed text influences model fit. To investigate the combination of these two factors, we generated four additional corpora: two corpora generated with child-directed and two generated with adult-directed prompts, of which one of each had the Experiment 1 temperature value and the other had an increased temperature value (i.e., 0.5 and 0.9). Together, these four corpora included: (i) \textit{Child-Directed \& Low Temperature (ChLT)}. (ii) \textit{Child-Directed \& High Temperature (ChHT)}. (iii) \textit{Adult-directed \& Low Temperature (AdLT}, as well as (iv) \textit{Adult-directed \& High Temperature (AdHT)}. Since ChLT used the same target audience and the same temperature, it is an attempt to reproduce the corpus from Experiment 1.
+
+Like in Experiment 1, we compare the new LLM corpora to childLex \citep{schroeder_childlex_2015} and fit the resulting measures to child reading performance. We also compare the fit for LLM word frequency with adult books-based word frequency \citep[DWDS][]{heister_dlexdb_2011} to determine which measure fits best to adult reading performance (DeveL contains response times for both children and adults). We expected higher model fits on child reading performance for child-directed word frequency compared to adult-directed word frequency. This would demonstrate that the LLM is indeed capable of generating text tailored to children. Likewise, we expected higher model fits on adult reading performance for adult-directed word frequency. For temperature, we expected that a higher temperature would increase lexical richness and, therefore, result in a corpus that is more similar to childLex. Given that in Experiment 1, the lexically richer corpus (childLex) resulted in lower model fits in reading performance, it can be expected that higher lexical richness would again result in a lower model fit to reading performance.   
+
+We decided to look at grades 1--4 together, as we assumed that reading across these grades is still in a comparable stage of development. Excluding adolescents follows developmental evidence that lexical processing shifts from reliance on frequency-based decoding (Grades 1--4, ~Age 6--9) to more automated recognition by Grade 6 \citep{meixner2022perceptual}. Experiment 1 also showed differences between grade 6 and the younger children as well as the adult readers. 
+
+Compared to Experiment 1, we increased the size of both child-directed LLM corpora to $\sim$ 23 million words (going from $\sim$ 6 million in Experiment 1) to make sure that corpus size did not affect our findings. We expected this to increase the number of overlapping words with childLex and to increase the reliability of the low-frequency measures \citep{gernsbacher_resolving_1984}. This should also lead to more precise measures of lexical richness, which may be more important for a high-temperature setting. 
+
+
+\subsection{Methods}
+
+We used the same settings (“max\_tokens” set to 4000) and prompt as in Experiment 1, except for the temperature (max. value was 2.0). Data was generated in June 2024 using GPT-3.5-turbo, which was now pointing to Snapshot Version 1106. In initial explorations, a temperature above 1.0 resulted in frequent hallucinations, such as changing the names of the main characters in the story (e.g., Ferdinand instead of Fred). A higher temperature also led to more incoherent stories. We decided to set the temperature to 0.9 in the high-temperature condition and maintain the same value as in Experiment 1: 0.5 in the low-temperature condition. 
+
+For each age group (Ages 1--5), we generated 10 texts for each of the 500 books in two runs, using both low- (0.5) and high-temperature (0.9) settings. Additionally, we generated one run of 10 child-directed texts per book without age specification for both temperature settings. In total, this resulted in 55,000 child-directed texts for each temperature setting. To generate adult-directed texts, we performed three runs of 10 texts per book, again using both temperature settings. This resulted in 15,000 texts for the low-temperature setting and 15,000 for the high-temperature setting. 
+
+We compared word frequency measures for both the child reading performance data (i.e., from Grades 1-4) and the adult reading performance data (i.e., younger and older adults). 
+
+
+\subsection{Results}
+
+\subsubsection*{Word frequency distributions and lexical richness}
+
+The generated text was generally shorter compared to Experiment 1, averaging about 278 words per text for the high temperature conditions and about 270 for the low temperature conditions. Table \ref{freqComp2} shows that all four crossed temperature and target audience conditions generally resulted in more unique types and lemmas compared to the LLM corpus from Experiment 1 (see Table \ref{freqComp}). However, childLex was still much richer than all LLM corpora. 
+
+For the adult-directed LLM corpora, the higher number of unique types, compared to the LLM corpus from Experiment 1, is plausibly due to the adult-directed audience prompt change creating a richer vocabulary (i.e., see \textasciitilde 46k in Experiment 1 vs. \textasciitilde 71k and \textasciitilde 84k in the adult-directed LLM corpora). For the child-directed corpora, it is likely that the increase in unique types is due to a larger corpus size (i.e., see \textasciitilde 46k in Experiment 1 vs. \textasciitilde 85k and \textasciitilde 111k in the child-directed corpora from Experiment 2). For the child-directed corpora, the \% of hapax tokens (i.e., \% hapax legomena across all tokens, meaning the percentage of tokens in the corpus that occur only once) was lower compared to Experiment 1 (.12\% and .18\% vs. .25\%). This is also plausibly due to a larger corpus size, as the number of hapax legomena does not increase substantially for larger sample sizes (see the differences in slopes of Figures \ref{fig:df.growth.intrextr} and \ref{fig:df.growth.intrextr2}. The \% of hapax legomena across all types or all unique lemmas remained relatively constant with a larger corpus size (Types: Exp. 2: 33.56\% vs. Exp. 1: 33.03\%; Lemmas: Exp. 2: 33.00\% vs. Exp. 1: 33.09\%). 
+
+Furthermore, the high temperature setting has a stronger influence on the percentage of hapax types than having an adult target audience. In other words, the temperature setting more strongly influenced the percentage of words used only once, compared to the target audience. This can be illustrated by comparing percentages: 38.21\% for ChHT vs. 33.56\% for ChLT is a larger difference than 34.69\% for AdLT vs. 33.56\% for the ChLT. 
+
+Taken together, generating texts with a high temperature setting and prompting for adult text increased the lexical richness. However, lexical richness was still substantially lower than the lexical richness in childLex (48.74\% hapax types in childLex vs. $<$ 38.21\% in the LLM corpora). 
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:42:25 2024
+\begin{table}[!htbp]
+\caption{Size and descriptive statistics for the 4 LLM corpora from Experiment 2 compared to childLex. Note that LT \& HT refer to low and high temperature settings.}
+\centering
+\begin{tabular}{lrrrrr}
+  \hline
+    Measure & childLex & Adult LT & Adult HT & Child LT & Child HT \\ 
+  \hline
+n Books & 500 & 500 & 500 & 500 & 500 \\ 
+  Tokens & 9,850,786 & 7,191,531 & 7,368,921 & 23,320,466 & 23,887,118 \\ 
+  Types & 182,454 & 71,423 & 83,921 & 84,978 & 110,603 \\ 
+  Lemmas & 117,952 & 52,528 & 61,318 & 63,552 & 82,126 \\ 
+  \% Hapax tokens & 0.90 & 0.34 & 0.44 & 0.12 & 0.18 \\ 
+  \% Hapax types & 48.74 & 34.69 & 38.21 & 33.56 & 38.21 \\ 
+  \% Hapax lemmas & 48.30 & 34.82 & 38.13 & 33.00 & 37.05 \\ 
+  \% Tokens $>$ 4 & 97.89 & 99.41 & 99.29 & 99.79 & 99.71 \\ 
+  \% Types $>$ 4 & 26.53 & 40.51 & 37.26 & 42.48 & 37.38 \\ 
+  \% Lemmas $>$ 4 & 27.91 & 40.26 & 37.13 & 42.82 & 38.10 \\ 
+   \hline \\
+\end{tabular}
+\label{freqComp2}
+\end{table}
+
+
+Using the growth curves from extrapolated sample sizes, we also see that the lexical richness in both adult-directed corpora was higher than in the child-directed corpora (see Figure \ref{fig:df.growth.intrextr2}). The number of types, at around 20 million tokens ($2 \times 10^7$), is around 90,000 types for the AdLT (adult-directed low temperature, see above) corpus and 75,000 types for the ChLT corpus. Likewise, there are about 105,000 types for the AdHT corpus and only 95,000 types for the ChHT corpus (i.e., roughly an increase of 10,000-15,000 types for the adult-directed corpora). These differences are smaller compared to the temperature manipulation (90,000 vs. 105,000 types in adult-directed corpora and 75,000 vs. 95,000 types in child-directed corpora). At 10 million tokens, childLex already has more than double the number of types (about 80,000 types for AdLT, 90,000 types for AdHT, 60,000 types for ChLT, and 70,000 types for ChHT). 
+
+This pattern is also confirmed by comparing the relation between word frequency and rank for the three new conditions, as in Figure \ref{fig:rankplot-normal} from Experiment 1 (see Figure \ref{fig:rankplot-normal2}). The three new conditions fall between the curves from Experiment 1 and the curve based on childLex. The AdHT curve matches childLex most closely. 
+
+\begin{figure}[!htbp]
+  %\centering
+  \centerline{
+  %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[width=1.1\textwidth]{figures/combined_plotc.pdf}}
+    \caption{(A) Pairwise correlations between log word frequency measures derived from the LLM corpora and childLex. (B) Number of shared words between corpora.}
+    \label{fig:combined_plotc}
+  %\end{minipage}
+\end{figure}
+
+The correlation between LLM and childLex log word frequency was slightly smaller compared to the correlation we found in Experiment 1 ($r=.69$ vs. $.67$, see \ref{fig:combined_plotc}A). Word frequency from Experiment 1 correlated most strongly with those from the reproduction condition (ChLT; $r=.87$). Figure \ref{fig:combined_plotc}B shows the varying numbers of shared words on which the pairwise computed correlations are based. We find higher correlations for the corpora with the same vs. different target audience, regardless of temperature (see Figure \ref{fig:combined_plotc}A). In contrast, as we showed above, the percentage of hapax words across types or lemmas is more similar within vs. between temperature settings, illustrating the higher lexical richness due to increased temperature. 
+
+The percentages of shared words exhibit the same pattern observed in the correlations (see Figure \ref{fig:heatmaps}): the same target audience yields more overlapping words compared to using the same temperature setting. Also, the ChHT corpus contained the highest percentage of words from childLex (33\%, see the first column for the ChHT row in Figure \ref{fig:heatmaps}). This suggests that child-directed prompts result in a better overlap with childLex than adult-directed prompts, and also that a higher temperature results in more recovered words. Also, compared to the 20\% shared words of Experiment 1, this marks a notable increase. Vice versa, childLex contained the most words from the AdLT corpus (58\%, see second column for the childLex row), probably because this corpus was the smallest with the least types. The overlap between the LLM corpora ranged from 33\% to 73\%. This suggests that corpus size, temperature, and target audience yield relatively distinct statistics.  
+
+The words in the LLM corpus that do not occur in childLex are very similar to those from Experiment 1 for both the low- and high-temperature conditions. ChildLex words that do not occur in the LLM corpus are now different, which is plausible, given the larger corpus from Experiment 2. The words missing from the LLM corpus seem heterogeneous, including words such as \textit{immerhin} (anyway), see Tables \ref{words-chlt} and \ref{words-chlt-low}, or \textit{mich} (mine), see Tables \ref{words-chht} and \ref{words-chht-low}. Even though they are missing here, it is not implausible that such words will eventually occur as an LLM corpus gets larger, given their large amounts of training material. 
+
+
+\begin{figure}[!htbp]
+  %\centering
+  \centerline{
+  %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[width=.8\textwidth]{figures/fig8_r2_age_sep.pdf}}
+    \caption{Model comparison and effect size results for children (A and C) and adults (B and D). A and B show AIC differences based on linear mixed-effect regression models of RTs with and without the word frequency measure. C and D show corresponding word frequency effect size estimates, including 95\% CIs. The solid blue and red lines in panels A and C represent Experiment 1 LLM word frequency and childLex, respectively, and the solid green lines in panels B and D represent DWDS (which was the best-performing model for the adult RTs in Experiment 1). Note that Experiment 2 results are color-coded in red and Experiment 3 results are color-coded in dark blue. The best-fitting models in each Experiment are highlighted by more intense colors.}
+    \label{fig:modelcomprt2}
+  %\end{minipage}
+\end{figure}
+
+% \begin{figure}[!htbp]
+%   %\centering
+%   \centerline{
+%   %\begin{minipage}[t]{0.9\textwidth}
+%     \includegraphics[width=.8\textwidth]{figures/exp12-new-col.pdf}}
+%     \caption{Model comparison and effect size results for adult and child reading performance data using (A) AIC for statistical model comparison based on the Experiment 2 corpora and (B) the Experiment 1 corpora as well as childLex and DWDS. Corresponding effect size estimates on log-transformed lexical decision response times from linear mixed effect regression models, including the 95\% intervals, are presented for word frequency measures of Experiment 2 in (C) and Experiment 1 in (D). Note that high or low temperature is color-coded in red and blue in (A) and (C). The white dashed line in (A) and (B) indicates the threshold for a significant model fit increase. Model comparison results, measured in AIC points relative to a baseline model without a word frequency measure.}
+%     \label{fig:modelcomprt2}
+%   %\end{minipage}
+% \end{figure}
+
+\subsubsection*{Evaluating LLM word frequency using on reading performance}
+
+As in Experiment 1, we estimated model fit increase (i.e.,  AIC) in relation to a baseline model (i.e., without word frequency included). Again, all LLM-based models resulted in a larger increase in model fit compared to the childLex-based model when fitted to the child RTs (see Figure \ref{fig:modelcomprt2}A). However, the Experiment 1 LLM corpus, even when generated with a low-temperature setting, still had the highest model fit. For the adult RTs, word frequency based on adult-directed text resulted in a higher model fit compared to child-directed text. DWDS word frequency resulted in the best fit (see Figure \ref{fig:modelcomprt2}B). 
+
+All effect size estimations had confidence intervals that excluded 0, indicating a significant word frequency effect. The CIs also all excluded the estimated effect size for childLex, indicating that LLM word frequency results in weaker estimations of the word frequency effect (see Figure \ref{fig:modelcomprt2}C and D).
+
+We found that age-specific corpus generation enables a more accurate estimation of the word frequency effect on child reading performance of children compared to adults. We compared the child-directed LLM word frequency fitted to both adult and child reading performance data and vice versa (see Figure \ref{fig:modelcomprt2}A vs. B). We did not observe differences in estimated effect sizes (overlapping CIs).  
+
+Surprisingly, an increase in temperature results in better model fit for both the child- and adult-directed word frequency measures and also for both the child (see Figure \ref{fig:modelcomprt2}A) and adult RTs (see Figure \ref{fig:modelcomprt2}B). The estimated effect sizes remain similar to the Experiment 1 estimate (see the overlapping CIs in Figures \ref{fig:modelcomprt2}C and D). 
+
+
+\subsection*{Summary: Experiment 2}
+
+Experiment 2 replicated the main finding of Experiment 1: a word frequency measure derived from LLM corpora can be used to model the word frequency effect in reading effectively. Experiment 2 manipulated two more variables: 1) the LLM temperature parameter (high vs. low) to try to increase the lexical richness of the corpus, and 2) the target audience (adults vs. children) to investigate if prompting for child-directed text makes a difference.  
+
+We found that a higher temperature increased the lexical richness of the corpora and that higher temperatures resulted in higher model fits. Confirming our assumption for Experiment 1, we found evidence that LLM corpora can indeed be tailored to a specific target audience. However, the finding that model fit increases with increased lexical richness is a new facet not predicted by the findings of the first study. Overall, LLM word frequency from Experiment 1, with a low lexical richness, showed the highest model fit for children. Notably, the corpus with the same settings as in Experiment 1 (i.e., child-directed and low temperature) also resulted in a lower model fit. This finding suggests that using the same model but different snapshots can yield significantly different results. The main issue is that the LLM that we used for Experiments 1 and 2 is closed-source, motivating the use of an open-source model in Experiment 3, which potentially allows for a more reproducible use of LLMs. For adults, model fit increased with lexical richness, but could not reach the model fit for the book-based DWDS word frequency.
+
+\section{Experiment 3}
+
+Experiment 3 had three goals: (i) We aimed to replicate the Experiment 1 results using two different open-weight LLMs, making sure that our findings are computationally reproducible across models. (ii) We aimed to explore the effects of increasing the length of generated text. We expected an increase in lexical richness for corpora containing longer texts. (iii) In Experiment 1, we found a stronger model fit to child reaction times for LLM word frequency compared to childLex word frequency, despite having lower lexical richness. This indicated that a higher lexical richness does not necessarily lead to better model fit. For Experiment 3, we aimed to further investigate whether higher lexical richness again results in lower model fit to child reaction times (RTs). We adopted a similar procedure to that in Experiment 2, generating four corpora from two different LLMs with two different text lengths, thereby creating another 2 × 2 design. 
+
+
+\subsection{Methods}
+
+\subsubsection{Model choice and prompt}
+
+We determined that suitable models must have the capability to generate text in German, have at least open-source weights (ideally also code and full documentation), and not be a distillation, combination, or foundation model. We determined currently available and high-performing LLMs using Chatbot Arena \citep{chiang_chatbot_2024} and the Hugging Face open LLM leaderboard \citep{fourrier_open_2024} in February 2025. Based on these considerations, we selected Llama-3.3-70B-Instruct \citep{grattafiori_llama_2024} and DeepSeek-V3 \citep{liu_deepseek-v3_2024} to have models with different architectures and numbers of parameters. DeepSeek is a Mixture-of-Experts (MoE) model with 671B total parameters, with 37B activated for each token. Llama 3.3 70B is a dense transformer model with 70B total parameters, all of which are typically active. Weights and limited code and documentation are available, but no training data or peer-reviewed papers are available, among other issues (see \url{https://osai-index.eu} for an evaluation).  
+
+We generated short-text corpora with a prompt similar to Experiments~1 and~2: \textit{``Schreibe eine Kindergeschichte für Kinder im Alter \{age\} über: \{book\_title\}''} (write a children’s story for children aged \{age\} about \{book\_title\}). This small prompt change compared to Experiments 1 and 2 ensured generation of stories rather than commentary in the two LLMs used here. For the long-text corpora, we experimented with similarly simple but also more complex prompts (e.g., first prompt: describe the first quarter of the book; second prompt: describe the second quarter of the book; etc.). We found that a continuation-based strategy worked best: The first prompt was always the same as for the short-text corpora, and all follow-up prompts were: "Continue from: " + currenttext[-500:], until reaching 4000 words. This prompted the model with the last 500 characters of the current output to improve topical consistency and reduce the generation of generic text. 
+
+
+\begin{table}[!ht]
+\caption{Size and descriptive statistics for the four corpora from Experiment 3 compared to childLex. Llama is Llama-3.3-70B-Instruct, and DS-V3 is DeepSeek-V3.}
+\centering
+\begin{tabular}{lrrrrr}
+  \hline
+Measure & childLex & Llama long & Llama short & DS-V3 long & DS-V3 short \\ 
+  \hline
+n Books & 500 & 500 & 500 & 500 & 500 \\ 
+  Tokens & 9,850,786 & 10,332,850 & 7,215,565 & 9,763,062 & 7,162,685 \\ 
+  Types & 182,454 & 51,320 & 40,660 & 239,830 & 95,321 \\ 
+  Lemmas & 117,952 & 39,272 & 39,272 & 191,309 & 74,695 \\ 
+  \% Hapax tokens & 0.90 & 0.17 & 0.19 & 1.43 & 0.62 \\ 
+  \% Hapax types & 48.74 & 33.62 & 34.01 & 58.10 & 46.52 \\ 
+  \% Hapax lemmas & 48.30 & 34.13 & 34.13 & 55.39 & 44.60 \\ 
+  \% Tokens $>$ 4 & 97.89 & 99.71 & 99.67 & 98.03 & 99.06 \\ 
+  \% Types $>$ 4 & 26.53 & 42.19 & 42.09 & 20.00 & 29.54 \\ 
+  \% Lemmas $>$ 4 & 27.91 & 41.49 & 41.49 & 21.53 & 30.46 \\ 
+   \hline
+\end{tabular}
+\label{freqComp3}
+\end{table}
+
+
+\subsubsection{Procedure}
+
+For the short-text corpora, we conducted 50 runs of text generation for each of the 500 book titles. To reach a text length similar to Experiment 2, we set the max\_tokens parameter to 600 for Llama and 700 for DeepSeek, after experimenting with different settings. Text generation resulted in an average of 287 (Llama) and 284 (DeepSeek) tokens per text, with a total corpus size of about 8 million. For the long-text corpora, we conducted five runs of text generation for each of the 500 book titles. We set max\_tokens to 2000, and we configured the prompt to continue producing text until at least 4000 words per book were generated, which resulted in an average of 4155 (Llama) and 4031 (DeepSeek) words per text. Following our findings from Experiment 2, we set the temperature parameter to 0.7 for all generated texts. We also retained the default settings of other parameters in both models (top\_p = 0.7 and top\_k = 50). For the long corpora, the total corpus size was similar to that of childLex (see Table \ref{freqComp3}). We used meta-llama/Llama-3.3-70B-Instruct-Turbo and deepseek-ai/DeepSeek-V3 (not the updated DeepSeek-V3-0324, which was not yet available) deployed on Together.ai (\url{https://api.together.ai/models}) in March 2025. Note that "Turbo" only indicates that the model is quantized to FP8, a numerical format used for deployment at large scale with minimal impact on model output. The cost was US\$ 0.88 per million tokens for Llama and US\$ 1.25 per million for DeepSeek. The DeepSeek model resulted in frequent connection errors and significantly slower text generation speed than Llama. 
+
+We extended the pre-processing pipeline from Experiments 1 and 2 by applying additional normalization to the frequency list. After removing numbers/punctuation, we further cleaned the data by removing remaining special punctuation, non-alphabetic characters (except German diacritics), and consolidating whitespace. Duplicate word forms were merged under their normalized versions while retaining original forms for reference. This reduced noise from orthographic variants while preserving linguistic content. The additional normalization had only a marginal effect on the results. 
+
+\subsection{Results}
+
+\begin{figure}[!htbp]
+  %\centering
+  \centerline{
+  %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[width=1.1\textwidth]{figures/combined_plotc_exp3.pdf}}
+    \caption{(A) Pairwise correlations between log word frequency measures derived from the DeepSeek and Llama corpora. For comparison, we additionally included the LLM corpus from Experiment 1 and childLex. (B) Number of shared words between corpora. Numbers and color scale represent Pearson correlations in A and the number of shared words in B.}
+    \label{fig:combined_plotc_exp3}
+  %\end{minipage}
+\end{figure}
+
+
+\subsubsection*{Word frequency distributions and lexical richness}
+
+Lexical richness was higher in both DeepSeek corpora compared to both Llama corpora and all Experiment 1 and 2 corpora, see \% hapax tokens and types in \ref{freqComp3}. The short-text DeepSeek corpus had a slightly lower lexical richness and the long-text corpus had a higher lexical richness than childLex (e.g., .62\% and 1.43\% words occur only once vs. .90\% for childLex; see Table \ref{freqComp3}). Figure \ref{fig:df.growth.intrextr3} also shows growth curves of these values for different corpus sizes. The word frequency correlations are also higher for both DeepSeek corpora, and the number of shared words is highest for the DeepSeek long-text corpus (see Figure \ref{fig:combined_plotc_exp3}). Normalizing for corpus size, the long-text DeepSeek corpus uses about a third of the childLex words (39\%, see Figure \ref{fig:heatmaps-exp3}). In contrast, the Llama corpus included only about one-sixth of the childLex words (this was similar to the Experiment 1 overlap and lower than the Experiment 2 overlap, see \ref{fig:heatmaps}). The long-text DeepSeek corpus generated the highest number of types overall, resulting in an increase of about 50 thousand types compared to childLex (i.e., see Table  \ref{freqComp3}). Thus, the long-text DeepSeek corpus contained both many childLex words as well as words not in childLex (see Tables \ref{words-dslo} and \ref{words-dssh} for examples). 
+
+For the Llama corpora, we found similar lexical richness to that of the GPT-based corpora, again showing lower lexical richness compared to childLex (i.e., see Table  \ref{freqComp3}). We found no clear difference between long and short Llama corpora. Llama resulted in lower word frequency correlations with childLex and had lower overlap with childLex compared to DeepSeek (see Figure \ref{fig:heatmaps-exp3}). 
+
+\begin{figure}[!htbp]
+  %\centering
+  \centerline{
+  %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[width=.6\textwidth]{figures/fig9_r2_cor.pdf}}
+    \caption{Model fit over lexical richness (measured by \% hapax tokens) across nine LLM generated corpora and childLex. }
+    \label{fig:scatterrichness}
+  %\end{minipage}
+\end{figure}
+
+
+\subsubsection*{Evaluating LLM word frequency using reading performance data}
+
+We found that word frequency based on the Llama short-text corpus resulted in a higher model fit to child RTs compared to all other word frequency measures generated across Experiments 1, 2, and 3 (see Figure \ref{fig:modelcomprt2}A). In contrast, both DeepSeek corpora performed less well. The word frequency measure based on the lexically rich long-text DeepSeek corpus was the only LLM-based measure that resulted in a lower model fit compared to the childLex word frequency measure. Still, all effect size estimates were highly comparable (see Figure \ref{fig:modelcomprt2}B). Together, these results are in line with the observation that corpora with higher lexical richness are less well-suited to explain reading performance in young readers. Indeed, when we compiled all model fits and lexical richness estimates from the LLM corpora and childLex generated across all three experiments, we found a strong correlation (r = -.69, see Figure \ref{fig:scatterrichness}). 
+
+
+\subsection*{Summary: Experiment 3}
+
+In Experiment 3, we extended our study using two open-weight LLMs (Llama-3.3-70B-Instruct and DeepSeek-V3), generating short- and long-text corpora. DeepSeek generated text with similar or higher lexical richness than childLex, although both LLMs generated unusual word combinations rarely used in natural language (e.g., see Table \ref{words-dslo}). The Llama-based corpora were less lexically rich, but the extracted word frequency measures described the word frequency effect in reading performance better than any other corpus; in particular, for the short-text Llama corpus. Combining the results from all three experiments thus showed that corpora with lower lexical richness generally resulted in better model fits. Experiment 3 did not further investigate the role of the temperature parameter. 
+
+
+\section*{General Discussion}
+
+In three experiments, we explored whether word frequency derived from LLM text is adequate for estimating the word frequency effect in visual word recognition. We decided to focus on German children because we expected to need a smaller corpus, and relevant resources are available in German. 
+
+In Experiment 1, we generated an LLM corpus based on child-directed texts using GPT-3.5-turbo. The corpus was less lexically rich compared to a corpus of child-directed texts written by humans \citep[childLex; ][]{schroeder_childlex_2015}. Compared to childLex word frequency, LLM word frequency better explained variability in child reading performance \citep[lexical decision reaction times for 1000+ words taken from DeveL; ][]{schroter_developmental_2017}. Interestingly, when comparing the size of the word frequency effect, the better-fitting LLM word frequency resulted in a lower effect size.   
+
+Experiment 2 demonstrated that using child-directed prompts indeed results in a word frequency measure that is adjusted to child RTs. When we generated text with child-directed prompts, it was less lexically rich and fitted better to child RTs. When we generated text with adult-directed prompts, it was more lexically rich and fitted better to adult RTs. Experiment 2 also showed that increasing the temperature can increase lexical richness, but not to the same level as that of childLex. All four Experiment 2 corpora, including the reproduction condition, resulted in lower model fit to child RTs compared to the Experiment 1 corpus. This was likely a result of using a newer snapshot LLM version in Experiment 2, as this was the only difference from the Experiment 1 generation procedure.
+
+In Experiment 3, we generated short- and long-text corpora using open-weight LLMs. Llama generated text with relatively low lexical richness, while Llama word frequency described lexical decision times best (i.e., model fit was better compared to all other LLM-based frequency measures). DeepSeek generated corpora with a higher lexical richness than every other corpus, while DeepSeek word frequency did not result in a good model fit. In a final analysis, we correlated the lexical richness and model fit of all available corpora and demonstrated that the model fits decrease with increasing lexical richness of a corpus. In summary, we generated LLM corpora with varying target audiences, temperature settings, closed- and open-weight LLMs, and text lengths. LLM word frequency captured the word frequency effect in child reading across all corpora, and effect size estimations were similar. 
+
+
+\subsection*{Lexical richness of LLM corpora}
+
+Corpus comparison revealed that all but one LLM corpus contained fewer unique types than the childLex corpus. Measures of lexical richness included the percentages of hapax legomena, see Figure \ref{fig:scatterrichness}, and the predicted number of types based on LNRE models, see Figure \ref{fig:zipfR_extrapolation}. In line with this, word frequency distributions generally also include more frequent types. We could increase lexical richness by (i) increasing the temperature, (ii) prompting for adult-directed text, (iii) increasing the text length, and (iv) using different LLMs. We observed a comparably large increase in lexical richness for DeepSeek but not for Llama, especially for long text lengths. This finding could be attributed to the larger number of model parameters, training data, or the architecture used, among other factors. Explaining this pattern in detail requires additional analysis, as well as greater transparency in, for example, training data \citep{liesenfeld_opening_2023}.
+
+What does lexical richness of LLM text indicate? The results of Experiment 2 rule out that low lexical richness is simply the result of using child-directed prompts or a low temperature value. Extrapolation also showed that if the LLM corpora would have had the same size as childLex (10 million tokens), they would have had roughly less than half of the types (300k types for childLex vs. somehwere between 75k and 175k types, depending on the corpus), see Figure \ref{fig:zipfR_extrapolation}. The lexical richness of childLex is roughly comparable to SUBTLEX and other existing adult-directed corpora \citep{baayen_word_2001}.  
+
+It has been observed before that LLM performance can suffer when confronted with words that do not appear often in training data across a number of cognitive tasks, including reasoning \cite{razeghi_impact_2022} and answering fact-based questions \cite{kandpal_large_2023}. If such biases exist in low-frequency words, it seems reasonable for LLMs to show a preference for higher-frequency words when prompted to generate text. The low-frequency words that the LLMs used in our study were often unusual combinations or derivations of other words (e.g., \textit{Vollmond-tanz}, meaning "full-moon-dance" and \textit{Lieblings-Sonnbrille}, which translates to \textit{favourite-sunglasses}). Tables \ref{words-dslo} and \ref{words-dslo} include some of the words not in childLex or that occur the least often in childLex. In the DeepSeek-long corpus, this resulted in higher lexical richness, but the resulting set of DeepSeek words was still considerably different from childLex. For example, out of the 180k words in childLex, the DeepSeek long-text corpus included only about 60k words (i.e., only about 1/3 of the childLex). Still, this overlap was the highest across all LLM corpora. Thus, the high lexical richness of the DeepSeek long-text corpus results from 60k words that overlap with childLex and about 180k words that do not overlap with childLex.
+
+Despite the low richness of much of the LLM text that we generated, LLM text still resulted in word frequency measures that are similar to existing word frequency measures. We observed a moderately strong correlation between childLex and the Experiment 1 LLM word frequency (.69 for log-frequency per million across \textasciitilde 50,000 words), which seems typical compared to previously reported correlations. For example, SUBTLEX-UK (an English subtitle-based corpus) correlated at r = .66 to the Children Printed Word Database (\textasciitilde 9,000-word frequencies across 11,000 English children books, \citep{van_heuven_subtlex-uk_2014} using a different but similar transformation of the word frequency counts. The LLM text thus does seem to represent certain qualities of natural text. 
+
+It was clear that LLM text remained qualitatively different from human-written text. LLM-based text was more stereotypical, while narrative, figurative, and rhetorical elements were often missing or felt unnatural. Subjectively, different LLMs yielded distinct styles. LLMs more often generated words central to the prompted book (e.g., \textit{wand} in Harry Potter) and used fewer function words and word types that indicate direct speech, such as "sagt" (\textit{says}). Future efforts could focus on prompting for book-length text (i.e., as shown \href{https://medium.com/@baen2810/ai-assisted-writing-of-a-book-cataclysm-67788412fb31}{here} or \href{https://eqbench.com/creative_writing_longform.html}{here}) to increase lexical richness and improve coherence etc. The corpus containing longer texts generated with DeepSeek did show a comparably high lexical richness, but this was also the corpus that subjectively contained the least coherent stories. Although we used lexical richness as a measure to characterize related differences in comparison with childLex, it is necessary to perform more detailed comparisons with other corpora as well as study other lexical, grammatical, and semantic statistics, including entropy, complexity, word frequency profiles, embeddings etc. \citep{hu_language_2024, dentella_systematic_2023, munoz-ortiz_contrasting_2024, wu_survey_2024}. \citet{kumarage_neural_2023} applied stylometric analyses to LLM texts and found that GPT 3.5 and 4 styles do not differ substantially from each other, relative to open-source LLMs. More research is necessary to determine the literary capabilities of modern LLMs compared to humans. Based on our findings, the relatively low lexical richness of LLMs could be troubling for using them to study child lexicon development \citep{korochkina_morphology_2025} and educational uses in general \citep[see also ][]{kasneci_chatgpt_2023}.
+
+
+
+\subsection*{Evaluation based on the word frequency effect in reading performance}
+
+We estimated the effect of word frequency in child reading performance to test whether LLM word frequency could characterize their lexical memory or how they access their mental lexicon \citep{brysbaert_word_2018, brysbaert_word_2011}. LLM word frequency allowed an adequate estimation of the word frequency effect while controlling for relevant covariates (age of acquisition, OLD20, word length). Most word frequency measures, except for the measure based on the DeepSeek short-text corpus, resulted in higher model fit than the children's book-based frequency measure. Word frequency from less rich LLM corpora best fits the data, with the Llama short text corpus showing the highest model fit. 
+
+The estimated size of the frequency effect was lower than we expected. Except for grade 1, childLex word frequency showed a larger effect size. Also, for adults, the frequency estimate that resulted in the best-fitting model showed a similar size \citep[see ][for effect size estimates with the DWDS word frequency]{schroter_developmental_2017}. This effect size reduction may be the result of the lower lexical richness of the best-fitting LLM corpora. The corpora with the highest lexical richness (childLex and DeepSeek) included nearly all words in the DeveL dataset ($>$ 96\%; see Figures \ref{fig:heatmaps} and \ref{fig:heatmaps-exp3}). In contrast, the corpora with lower lexical richness included lower numbers of words from the DeveL selection of words. Thus, LLM word frequency was zero for more words in this subset compared to childLex or the DeepSeek corpora (see the right panel of Figure \ref{fig:combined_hist_all4}). This distinction in the word frequency distribution of the DeveL words was also the most apparent difference between frequency measures. This finding indicates that children typically know these words less well, such that the word frequency estimate that excludes the word better represents the mental lexicon of children. Low-frequency or unknown words are important here, as words that are not yet or recently learned must be processed in a different way compared to already established words \citep[e.g., see ][]{gagl_lexical_2022,gagl_investigating_2023}. Even for adults, when an unknown word is encountered, a different behavior has to be established compared to when a known word is encountered (i.e., look up in a lexicon vs. move to the next word to establish sentence/text comprehension). This finding is also in line with investigations of children's vocabulary that show an increase in vocabulary size with age \citep[e.g., ][]{segbers_how_2017, keuleers_word_2015}. Note that estimations of low-frequency words are inherently noisier than high-frequency words, as fewer observations are present. 
+
+Why does LLM word frequency result in a better fit to reading performance data? It is unlikely that LLMs closely mimic the mental representations of children, given the distinct nature of LLMs. Their training data is too large \citep{frank_bridging_2023}, and the architectures are non-biologically plausible \citep{frank_bridging_2023}. LLM word frequency could be a coincidental product of a regularization process applied to the word frequency in the original training data. LLMs' computational mechanisms are designed to prevent overfitting and encourage the production of smoother, more generalizable words. Thus, generating words that occur slightly more often may be more appropriate in many contexts. Authors of children's books, on the other hand, are motivated to select words based on literary interests \citep{korochkina_morphology_2025}. 
+
+\citet{oh_frequency_2024} found that surprisal estimates from lower-performing models, e.g., as measured by perplexity (less predictive models), can better fit human reading times \citep[see also][]{boeve_systematic_2024}. Here, we found that children's stories generated by Llama-3.3-70B-Instruct and GPT3.5-turbo are less lexically rich compared to DeepSeek-V3, but better explained the frequency effect in children's reaction times. If we assume that lower lexical richness is a result of lower model performance in general, our results are consistent with this finding. Specifically, the models in our study that generate less lexically rich texts provide a better fit to lexical decision times. They, therefore, may better reflect an overlap of the vocabulary used by the model and stored in the children's mental lexicon. It seems to be an empirical question, how lexical richness relates to model perplexity.
+
+
+\subsection*{Limitations and future directions}
+
+In this study, we focused on text targeted at German children and reading performance measured by lexical decision times from German children. It is unclear whether LLMs can generate linguistic corpora for other, less well-represented groups, languages, and reading behaviors \citep[][]{gagl_eye_2022, blasi_over-reliance_2022}. As discussed above, more research is necessary to investigate the limitations of such extrapolation and the development of new resources that are currently unavailable but urgently needed \citep{henrich_weirdest_2010, blasi_over-reliance_2022}. Extrapolating to groups underrepresented in the training data will likely be affected by the Western bias in currently used training data \citep{atari_which_2023, rystrøm2025multilingualmulticulturalevaluating}. This is supported by results indicating that simply adding multilingual training data does not necessarily improve multilingual LLM performance, possibly due to capacity limits \citep{chang_when_2023}. The LLMs used here are not specifically developed for multilingual tasks and can achieve worse performance compared to specialized models in multilingual tasks \citep{lai_chatgpt_2023}. German can be considered a high-resource language that can outperform languages like Chinese or Vietnamese across several multilingual tasks \citep{lai_chatgpt_2023}. Thus, practical uses may conflict with current model biases, particularly for low-resource and non-Western languages. Although little is known about LLM performance in low-resource languages, the approach described here could be a first step. Recent investigations show that using language-specific LLMs can be beneficial for the extraction of psycholinguistic measures \citep{boeve_systematic_2024}. 
+
+In Experiment 3, we replicated findings from Experiment 1 with open-weight models. A next step is to select less complex models, potentially in toy examples, with all parameters known. We initiated this study using a non-transparent, large, and continuously evolving model. Mechanistic explanations become impossible when complexity is so high that the model becomes a black box \citep{bender_dangers_2021}. For studying cognitively plausible ways in which word frequency approximates reading times, LLMs that are only as large as developmentally plausible are necessary \citep[see][for recent work in this direction]{feng_is_2024, tan_devbench_2024, hu_auxiliary_2024}. Furthermore, performance changes in unpredictable ways for non-transparent large language models (LLMs) that are being fine-tuned continuously using reinforcement learning with human feedback  \citep[RLHF][]{bai_training_2022, chung_scaling_2024, perez_red_2022, ziegler_fine-tuning_2020}. In this process, LLMs are trained to better align with user requirements. This alternative optimization leads to a necessary trade-off between performance on next-word prediction and performance on alignment. Here, LLM word frequency from Experiment 1 resulted in much better model fits (AIC > 100) compared to the replication condition from Experiment 2. This difference is most likely due to changes between different snapshot versions of the same model that we used for Experiments 1 and 2.   
+
+With respect to corpus comparison, the lexical richness measures and word reading times we used here are simplistic qualities of text compared to the cultural, social, and ethical themes and pedagogical considerations underlying the text of children's books \citep[see e.g.][]{korochkina_morphology_2025}. This study does not discuss the higher-level syntax or semantics of the books analyzed here (but see Figures \ref{fig:pos_f}, \ref{fig:pos_f_devel} for an analysis of POS and \ref{fig:embed100} for an analysis of word embeddings). Furthermore, the study does not provide a detailed examination of whether the LLM text can be used to evaluate these qualities. The text generated for this study is available (i.e., see \href{dx.doi.org/10.17605/OSF.IO/WMUVJ}{OSF.io}) and can still be used for such investigations. We showed that explained variation in word reading times depends on how lexical properties are quantified, including word frequency. We showed that LLM text contains atypical patterns, such as the spillover effects from English to German or numerous words found only in the LLM corpus but not in childLex. Such patterns suggest that generated text cannot substitute for human text, particularly in settings involving vulnerable participants (e.g., in the context of schools or the broader public). 
+
+LLM word frequency explains more variance, but results in a smaller effect size compared to child book-based word frequency. These findings are difficult to explain within the current approach. How can cognitively implausible LLM word frequency be more informative about processing measures than traditionally used book-based word frequency? This is an empirical question with many possible answers. Approaching an answer will involve studying how adults infer which words are known by children, how well they can infer children's vocabulary, and if authors, on purpose, add less well-known words to their books for pedagogical purposes, e.g, to stimulate vocabulary growth \citep{korochkina_morphology_2025}. 
+
+
+\section*{Conclusions}
+
+Surprisingly, word frequency based on child-directed LLM text is similar to existing children's book-based word frequency (e.g., childLex). Lexical richness seems to depend on the type of LLM. LLM word frequency better describes the effect of word frequency on reading performance in German children, but the the estimated effect size is smaller. Thus, LLM corpora seem to open up new possibilities for investigating the word frequency effect, one of the strongest and most replicated effects in psycholinguistic research \citep{brysbaert_word_2018}, but also relevant to other domains of cognitive psychology \citep[i.e., object recognition][]{gregorova_access_2023}. 
+
+Still, caution is advised when trying to understand the possibilities of LLMs for language development research. LLMs deviate in crucial ways from natural language acquisition pathways. The different nature of LLMs results, on the one hand, in surprisingly different patterns of language use, and on the other hand, in patterns of word processing cost that closely follow empirical data from children. The result is an approach to quantify and compare how the elements of LLM text correlate with metrics from classic corpora and human behavior.
+
+
+\section*{Declarations}
+
+\textbf{Funding} This research was supported by the University of Cologne and the German Research Fund (DFG, N° 523332674). 
+
+\textbf{Conflicts of interest} We have no conflict of interest to disclose. 
+
+\textbf{Ethics approval} Not applicable. 
+
+\textbf{Consent to participate} Not applicable. 
+
+\textbf{Consent for publication} Not applicable. 
+
+\textbf{Availability of data, materials, code, and supplementary materials} See our OSF repository: \href{dx.doi.org/10.17605/OSF.IO/WMUVJ}{osf.io}. 
+
+% anonymized
+\textbf{Author contributions} anonymized
+
+
+%\printbibliography
+\newpage
+\bibliographystyle{apacite} 
+\bibliography{gpt.bib}
+\newpage
+
+\appendix
+
+\section{Experiment 1}
+
+\subsection{Word frequency transformation}\label{sec:word_freq_transform}
+
+The histograms in Figure \ref{fig:histogram_plot_devel} show that 
+
+\begin{equation}
+\log\left(\frac{(1 + \text{frequency}) \times 10^6}{\text{corpus\_size}}\right),    
+\label{eq:theone}
+\end{equation}
+
+is the most sensible transformation. Other options we considered included: 
+
+\begin{equation}
+\log \left( 1 + \frac{\text{frequency} \times 10^6}{\text{corpus\_size}} \right), 
+- \log \left( \frac{1 + \text{frequency}}{\text{corpus\_size}} \right), 
+\log \left( 1 + \text{frequency} \right) 
+\label{eq:others}
+\end{equation}
+
+The first transformation of Equation \ref{eq:others} (third row in Figure \ref{fig:histogram_plot_devel}) results in a lower bound of 0 and an upper bound of 1 for normalized word frequency between 0 and 1. The resulting distribution collapses these values on this narrow interval, resulting in a skewed distribution. 
+
+Furthermore, the transformations in Figure \ref{fig:scatter_plot2_devel} show the effect of corpus size on the transformed word frequency. For larger corpora, which include the child-directed LLM corpora and SUBTLEX, the non-normalized transformation ($\log \left( 1 + \text{frequency} \right)$) results in the strongest differences acrosss the corpora. 
+
+Finally, the transformations in Figure \ref{fig:scatter_plot_devel} finally show the different handling of low-frequency values. $\log \left( 1 + \frac{\text{frequency} \times 10^6}{\text{corpus\_size}} \right)$, behaves differently from the other 3 transformations by collapsing low word frequencies into a smaller range. 
+
+Note that $\log \left( 1 + \text{frequency} \right)$ was the transformation used by e.g. SUBTLEX \citep{brysbaert_word_2011}. This transformation avoids negative values, and assigns 0 to missing words, similar to $\log \left( 1 + \frac{\text{frequency} \times 10^6}{\text{corpus\_size}} \right)$. However, the latter does not distinguish well enough between low-frequency words. Here, we are choosing a transformation ($\log\left(\frac{(1 + \text{frequency}) \times 10^6}{\text{corpus\_size}}\right)$) that does normalize for corpus size, given the large differences we have here, see Figure \ref{fig:scatter_plot2_devel}. The negative values also do not show big gaps between low and 0 word frequency values, see Figure \ref{fig:scatter_plot_devel}. 
+
+\begin{figure}[!htbp]
+  %\centering
+    \includegraphics[width = 0.8\paperwidth]{figures/histogram_plot_devel.pdf}
+    \caption{ Histograms of transformed word frequency values. The x-axis shows the transformed word frequency values, and the y-axis shows the density of the values. The facets show the different transformations and the different corpora. The transformation in the third row results in a hard cut-off at 0 while the other 3 transformations result in more normal-like distributions. }
+    \label{fig:histogram_plot_devel}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[!htbp]
+  %\centering
+    \begin{minipage}[t]{1\textwidth}
+    \includegraphics[width = 0.8\paperwidth]{figures/scatter_plot2_devel.pdf}
+    \caption{ Scatter plots of transformed word frequency values. The facets show the different corpora.}
+    \label{fig:scatter_plot2_devel}
+
+%   \end{minipage}
+% \end{figure}
+
+% % \vfill 
+
+%   \begin{figure}[b]
+%     \begin{minipage}[b]{1\textwidth}
+
+    %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[width = 0.8\paperwidth]{figures/scatter_plot_devel.pdf}
+    \caption{ Zoomed in version of Figure \ref{fig:scatter_plot2_devel}, showing only observed word frequencies smaller than 50.}
+    \label{fig:scatter_plot_devel}
+  \end{minipage}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Most different words}
+
+Table \ref{lowin} shows the top words from the one corpus that appear the least often in the other corpus. 
+
+% latex table generated in R 4.3.0 by xtable 1.8-4 package
+% Thu Oct  5 12:26:56 2023
+\begin{table*}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters.}
+\centering
+\begin{tabular}{rllll}
+  \hline
+ & childLex & childLex $>$10 & LLM & LLM $>$10 \\ 
+  \hline
+1 & Ganz & Wahrscheinlich & Jack & Sattelschlepper \\ 
+  2 & Wieso & widersprach & Charaktere & Mäusepension \\ 
+  3 & Wahrscheinlich & blitzschnell & Brownie & Schulgespenst \\ 
+  4 & Bestimmt & Snorkfräulein & Brumm & aufgewecktes \\ 
+  5 & Soll & verächtlich & Poppins & unvergessliches \\ 
+  6 & verzog & irgendeinem & Zaubermaus & akzeptierten \\ 
+  7 & kreischte & anschließend & Sattelschlepper & Korallenschatz \\ 
+  8 & quer & irgendjemand & Fips & Abschlussfeier \\ 
+  9 & presste & Zaubereiministerium & Hoppel & verantwortungsvoll \\ 
+  10 & Meinst & Entschuldige & Mäusepension & unzertrennliche \\ 
+   \hline
+\end{tabular}
+\label{lowin}
+\end{table*}
+
+\clearpage
+
+\subsection{Litkey}
+
+We redrew the scatter plot from the main text using a corpus containing texts written by children themselves \citep{laarmann-quante_litkey_2019} instead of text written for children \citep{schroeder_childlex_2015}. This corpus is much smaller, but the resulting figure, see Figure \ref{fig:corlitkey}, shows the same pattern and the most differing words can be explained similarly as well. 
+
+\begin{figure}[!htbp]
+  %\centering
+  %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[width = 0.8\paperwidth]{figures/litkey.pdf}
+    \caption{The same as Figure 3 in the main text, but showing Litkey-based type frequency (x-axis). The pattern is similar, despite much less available data. }
+    \label{fig:corlitkey}
+  %\end{minipage}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Rank differences}
+
+Figure \ref{fig:rankplot-difs} zooms in on the specific differences between childLex and LLM curves shown in Figure 2 from the main text, similar to \ref{fig:rankplot-normal}. Positive differences indicate a higher LLM word frequency, while negative differences indicate a lower LLM word frequency. Before rank 1,000, LLM words are roughly used more often, while after rank 1,000, LLM words are generally used less often. This finding again illustrates that the LLM uses high-frequency words more often and low-frequency words less often.  
+
+\begin{figure*}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/rankplot-difs-3.5-2.pdf}
+    \caption{Differences between word frequency calculated based on the LLM and childLex corpora (i.e., the difference between the curves from Figure \ref{fig:rankplot-normal}).}
+    \label{fig:rankplot-difs}
+\end{figure*}
+
+\clearpage
+
+\subsection{DeveL comparison}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width = 0.8\paperwidth]{figures/exp18plus1-log.pdf}
+    \caption{Relation between log reaction times (ms) with LLM and childLex log-frequency.}
+\label{fig:rt-f-scatter}
+\end{figure}
+
+\clearpage
+
+\subsection{DeveL-subset correlation matrix}
+
+Figure \ref{fig:cormat_devel} shows the correlation matrix for the subset of 1052 words from Devel \citep{schroter_developmental_2017}. 
+
+The correlations between Experiment 1 LLM word frequency and reaction time ranged between .31 (grade 1), to .52 (grade 6), while childLex word frequency correlated between .35 (grade 1) to .59 (grade 6), see Figure \ref{fig:cormat_devel}. Both childLex and LLM word frequency correlated lower with adult reaction time (e.g., .48 and .39, respectively, for older adults). The LLM-childLex correlation was .75 for this subset of words, which is considerably larger than the correlation for the complete corpora (which was .69; see \ref{fig:combined_plotc}).
+
+The correlations for the Experiment 2 ChLT (the reproduced corpus) and the ChHT corpus were almost identical (maximally .02 difference). Both adult-directed corpora had lower correlations across all grades (.04 - .07 lower). Correlations with adult reaction times were similar across the new conditions (maximally .01 difference for older adult reaction times). The correlations for the child-directed corpora also did not increase compared to Experiment 1 and were also comparable across conditions (maximally .02 difference), which we also found for the correlations between complete corpora. 
+
+For Experiment 3, we found the highest correlation between the average children’s RT’s and LLM-based word frequency for the DeepSeek short corpus (r = .61) compared to the other LLM word frequency measures (r between .53 and .43). 
+
+Together, the correlations show similar differences compared to the effect sizes obtained from regressions with covariates (see Figures \ref{fig:modelcomprt} and \ref{fig:modelcomprt2}). 
+
+\begin{figure}[!htbp]
+  %\centering
+  %\begin{minipage}[t]{0.9\textwidth}
+    \includegraphics[width = .8\paperwidth]{figures/correlation_matrix_devel_may.pdf}
+    \caption{Correlation matrix for the Devel subset of words for which reaction times are available. The correlations with corpus-based word frequency measures are based on a $\log\left(\frac{(1 + \text{frequency}) \times 10^6}{\text{corpus\_size}}\right)$ transformation. These corpora include: SUBTLEX, DWDS, childLex, as well as the LLM corpora.}
+    \label{fig:cormat_devel}
+  %\end{minipage}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Effect sizes}
+
+% latex table generated in R 4.3.0 by xtable 1.8-4 package
+% Mon Aug  5 11:24:23 2024
+\begin{table}[!htbp]
+\caption{Effect size estimates per grade based on the complete set DeveL words.}
+\centering
+\begin{tabular}{lrrrrr}
+  \hline
+ & Estimate & SE & $t$ & $p$ & Adj. $R^2$   \\ 
+  \hline
+  Grade 1 \\ 
+  LLM Freq. & -27.1 & 6.1 & -4.4 & \textbf{$<$ 0.001} & 0.6363 \\ 
+  childLex & -25.1 & 11.4 & -2.2 & \textbf{0.028} & 0.6269\\ 
+  Grade 2 \\ 
+  LLM Freq. & -30.9 & 3.0 & 10.4 & \textbf{$<$ 0.001} & 0.6916 \\ 
+  childLex & -50.0 & 5.1 & 9.8 & \textbf{$<$ 0.001} & 0.6886 \\ 
+    Grade 3 \\ 
+  LLM Freq. & -24.4 & 1.8 & 13.6 & \textbf{$<$ 0.001} & 0.6613 \\ 
+  childLex & -37.0 & 3.1 & 11.8 & \textbf{$<$ 0.001} & 0.6495 \\ 
+      Grade 4 \\ 
+  LLM Freq. & -17.9 & 1.3 & -13.8 & \textbf{$<$ 0.001} & 0.5861 \\ 
+  childLex & -27.7 & 2.3 & -12.2 & \textbf{$<$ 0.001} & 0.5734 \\ 
+  \hline
+\end{tabular}
+\label{effsize}
+\end{table}
+
+\clearpage
+
+
+\subsection{Effect sizes}
+
+% latex table generated in R 4.3.0 by xtable 1.8-4 package
+% Mon Aug  5 11:24:23 2024
+\begin{table}[!htbp]
+\caption{Effect size estimates per grade based on a subset of the DeveL data that excludes words with 0 occurrences in the LLM corpus. }
+\centering
+\begin{tabular}{lrrrrr}
+  \hline
+ & Estimate & SE & $t$ & $p$ & Adj. $R^2$   \\ 
+  \hline
+  Grade 1 \\ 
+  LLM Freq. & -33.7 & 7.3 & 4.6 & \textbf{$<$ 0.001} & 0.6321 \\ 
+  childLex & -22.1 & 12.0 & 1.8 & 0.066 & 0.6198\\ 
+  Grade 2 \\ 
+  LLM Freq. & -34.3 & 3.3 & 10.3 & \textbf{$<$ 0.001} & 0.6874 \\ 
+  childLex & -48.1 & 5.3 & 9.1 & \textbf{$<$ 0.001} & 0.681 \\ 
+    Grade 3 \\ 
+  LLM Freq. & -25.6 & 2.0 & 12.7 & \textbf{$<$ 0.001} & 0.6562 \\ 
+  childLex & -33.7 & 3.2 & 10.4 & \textbf{$<$ 0.001} & 0.6404 \\ 
+      Grade 4 \\ 
+  LLM Freq. & -19.6 & 1.5 & 13.3 & \textbf{$<$ 0.001} & 0.5699 \\ 
+  childLex & -26.3 & 2.4 & 11.1 & \textbf{$<$ 0.001} & 0.55 \\ 
+  \hline
+\end{tabular}
+\end{table}
+
+\clearpage
+
+
+
+
+\subsection{Robustness analysis}\label{sec:rob}
+
+To estimate the robustness of the correlation between LLM and childLex word frequency, we re-estimated LLM word frequency based on subsets from the complete corpus, specifically for the words used in the DeveL dataset \citep{schroter_developmental_2017}. For this analysis, we started with the first LLM texts generated based on a prompt using the first book. After that, we successively added the texts from the next book and re-estimated the correlations for each subset (see Figure \ref{fig:partial_data}A). The curve shows a logarithmic increase in corpus similarity, indicating a substantial correlation increase of the two measures within the first 50 texts. After that, the increase in similarity is weaker, ending up at a correlation coefficient of just below .75. We tested whether the increase in similarity is indeed logarithmic. For this, we compared two correlations: The correlation between all correlation quotients (i.e., see y-axis in Figure \ref{fig:partial_data}A) and (i) the numbers of texts (i.e., see x-axis in Figure \ref{fig:partial_data}A) or (ii) the logarithm of the numbers of texts. The computed correlation for the linear number was lower (r = .71) than the correlation based on the logarithmic numbers (r = .94), indicating that the increase is indeed logarithmic  (Figure \ref{fig:partial_data}B also reports this correlation of .94 in the top left corner). The analysis shows that word frequency would not have been very different if we had used only half of the LLM corpus. It turns out that the correlation seems to keep increasing, but that it slows down with more text. 
+
+We also evaluated to what extent word frequency measures based on corpus subsets result in a lower model fit. Thus, we increased the corpus size (same as above), estimated the word frequency, and measured the model fit change when introducing the established word frequency measures compared to a model without the measure. We implemented this, starting with the texts from the first book. Ultimately, we can compare the absolute AIC difference values (i.e., AIC from the model with the new word frequency predictor minus the AIC based on the model without the predictor; the higher, the better the model fit) from all estimated word frequencies and all reading groups (1st-4th Grade, 6th Grade, younger and older adults; N tests = 500; see Figure \ref{fig:partial_data}C). We rely on model comparison methods using linear regression models and the AIC, a measure optimal to investigate model fit change for newly introduced parameters. Note that a change in three AIC points is a significant model fit increase (i.e., the black horizontal line in Figure \ref{fig:partial_data}C and D; all AICs above show a significant increase in model fit).
+
+This partial corpus analysis shows that variation in reading performance can be explained better based on word frequency measures based on larger corpora (Figure \ref{fig:partial_data}C), but that performance increases less, the larger the corpora. We find an increase in the AIC difference in all age groups, although the trend is very small in the youngest readers from Grade 1 (compare correlations of the size of the corpus - N - and Grade 1 - G1 - in contrast to the more older readers in Figure \ref{fig:partial_data}B). Nonetheless, all analyses, except for the word frequency measures based on very small corpora (Number of books < 5) predicting the reaction times of Grade 1 readers, showed a significant increase in model fit. Correlations of AIC differences with increasing corpus size of all our groups of readers also showed that in Grade 1, the pattern differed from all other groups (Figure \ref{fig:partial_data}B). In addition, groups with similar age (e.g., Grade 2 vs. Grade 3) had higher correlations (r range from .96 to .99) compared to comparisons with substantial age differences (e.g., Grade 2 vs. old adults; r = .81). Finally, the partial analysis that estimated the AIC differences against a baseline model including childLex word frequency as a predictor, showed that only linear models that predicted the reaction times of young readers (Grade 1-6) had an additional model fit increase based on the inclusion of LLM word frequency (see Figure \ref{fig:partial_data}D). Models describing adult data did not benefit from introducing LLM word frequency. Also, we observed that for young readers, larger corpus sizes are needed for the word frequency measurement to produce a measure with higher descriptive power (Grade 1: 6 books; 2: 103; 3: 59; 4: 95; 6: 121; see Figure \ref{fig:partial_data}D).
+
+
+In the first analysis of reading performance, we found that the model fit of RTs increased when including a word frequency measure based on only a fraction of the full LLM corpus (N $<$ 10 texts) for all age groups. Nonetheless, increasing the corpus size also increased the model fit further. For all but Grade 1 readers, the increase in model fit with a larger corpus was highly similar to the increase in the correlation between LLM- and childLex-based corpora described above (r range: .86 - .94). The difference for Grade 1 was that model fit analysis peaked after about 10\% of the corpus, with an incremental decrease of model fit for word frequencies based on larger corpora (i.e., when N $>$ 100). 
+
+Similarly, we compared the model fit increase for LLM word frequency based on partial corpora to a model that already included childLex word frequency. Here, we investigated whether the new LLM word frequency explains variance over and above traditional word frequency measures. Most notably, this was the case for the Grade 1 readers after only a fraction of the texts included (N $<$ 10). For Grades 2-6 readers, an increased model fit was found when the LLM corpus size was much larger (Grade 2: N $>$ 100; Grade 3: N $>$ 50; Grade 4: N $>$ 100; Grade 6: N $>$ 120). No additional variance was explained when childLex word frequency was already included for the two adult groups. 
+
+
+\begin{figure}[t]
+    \includegraphics[width = 0.8\paperwidth]{figures/partial_fig.png}
+    \caption{Partial LLM corpus analysis. (A) Subset-based estimation of the correlation between LLM type frequency and childLex type frequency (y-axis). We estimated the correlation 500 times based on an LLM word frequency extracted from a corpus that included only the first book. After that, we included all generated text from one additional book until all books were included. Note that this analysis was implemented for the words used in the DeveL dataset. (B) Pearson correlation matrix investigating the partial data curves from A and C. \textit{r} represents the correlations from A; \textit{N} represents the log-transformed number of stories (i.e., x-axis from A, C, or D); \textit{G1-6}, represent the AIC differences from Grade 1 to 6 shown in C; \textit{YA} and \textit{OA} represent the younger and older adults AIC differences shown in C. Lower matrix shows the correlation coefficient r and the upper matrix the color coded (blue: positive correlation; white: no correlation; red: negative correlation) correlation silhouettes (narrow silhouettes indicate high and wide silhouettes indicate low correlations). (C) AIC differences for linear mixed models of the DeveL reaction times. The models included word frequency measures estimated on a subset of the LLM corpus (i.e., same subsets as in A), which were compared to the model without a word frequency measure included, and (D) when the baseline model included childLex word frequency.}
+    \label{fig:partial_data}
+\end{figure}
+
+
+\clearpage
+
+
+
+\section{Experiment 2}
+
+\subsection{Rank comparison}
+
+\begin{figure}[!htbp]
+    \includegraphics[width = .6\paperwidth]{figures/rankf1-exp2.pdf}
+    \caption{Zipf's law plot showing a stronger negative slope for the LLM corpus compared to childLex. The slopes are fitted to words with a word frequency between 10 and 10,000. }
+    \label{fig:rankplot-normal2}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Word frequency histograms}
+
+Figure \ref{fig:combined_hist_all4} shows histograms of word frequency distributions for all words as well as for the subset of DeveL words only. We included words from three LLM corpora as well as childLex. We grouped low word frequencies together to improve the readability of the plot. 
+
+The word frequency of the words in DeveL does not follow the natural distribution of word frequency as displayed in the left panel (i.e., a high number of low-frequency words and a low number of high-frequency words). Instead, the DeveL word frequency follows a normal distribution (when ignoring the lowest frequency cases), containing relatively many medium to high-frequency words. This strategy is reasonable for child experiments as one wants to sample from as many frequency ranges as possible in a limited number of trials, with words that can be expected to be known by young readers. Furthermore, the right panel shows that a relatively large number of DeveL words are not present in the LLM corpora; see the difference in the histogram at zero between the LLM and ChildLex corpora. 
+
+There are also general differences between the LLM and childLex corpora. Across all words, there are more childLex words with low frequencies, with a transition at around 20 words per million (at this point, the bars for childLex are not higher anymore). In the DeveL subset, there are more low LLM-based frequencies, with a transition at around 7 words per million. These difference indicate that the LLMs tends to use some different words that are not in the DeveL selection in places where it could have used DeveL word. 
+
+\begin{figure}[!htbp]
+    \includegraphics[width = .8\paperwidth]{figures/combined_hist_all4-trans.pdf}
+    \caption{Distributions of word frequency based on childLex and three LLM corpora for all words (left) DeveL words only (right). For clarity, we grouped values with a log frequency per million that was lower than 0.}
+    \label{fig:combined_hist_all4}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Corpus overlap}
+
+Figure \ref{fig:heatmaps} shows overlap between the corpora, either for all words that were generated (left), or for the selection of words from the DeveL subset of words (right). Overlap with DeveL is almost 100\%. Only four words from DeveL are missing in childLex (99.7\% are overlapping), while 15 words are missing in ChHT (98.7\%).
+
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/heatmaps.pdf}
+    \caption{Overlap measured as percentage of retrieved words from one of both corpora. Overlap was defined as a word frequency > 0 for both corpora. The overlap percentages were computed by taking the number of words shared between the corresponding corpus listed on the left and bottom and dividing that number by the total corpus size of the corpus listed on the bottom row. Panel A shows percentages for complete corpora while panel B shows overlap for the DeveL selection of words only.}
+    \label{fig:heatmaps}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Type-token comparison}
+
+\begin{figure}[!htbp]
+    \includegraphics[width = .8\paperwidth]{figures/vgc_plots_grid.pdf}
+    \caption{Similar to Figure \ref{fig:df.growth.intrextr} (the type-token growth curve from the main text), these type-token growth curves show the dependency of the total number of unique types (y-axis) on inter- and extrapolated sample sizes (x-axis) for both adult-directed corpora (top), and for both child-directed corpora (bottom).}
+    \label{fig:df.growth.intrextr2}
+  \hfill
+\end{figure}
+
+\clearpage  
+
+
+\subsection{Word frequency comparison across corpora}
+
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/scatterplotfacets.pdf}
+    \caption{Scatterplots between LLM type frequency (y-axis) and childLex type frequency (x-axis; dark gray line) for all four corpora from Experiment 2. The labels show the top five differences on both sides (x-y and y-x). The color gradient of the dots represents the number of data points each dot represents.}
+    \label{fig:scatterplotfacets}
+\end{figure}
+
+\clearpage
+
+
+\subsection{High-frequency words comparison}
+
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/scatterplotfacetszoom.pdf}
+    \caption{Zoomed in version of \ref{fig:scatterplotfacets}}
+    \label{fig:scatterplotfacetszoom}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Split half reliability}
+
+To estimate the reliability of the frequency measurement based on LLM corpora, we estimated the split-half reliability (see Figure \ref{fig:reliablity}). We correlated LLM word frequency from a random selection of texts based on half of the book titles with the texts based on the other half of the book titles and repeated this 100 times. The correlations are thus based on correlating corpora that are based on completely different book titles with each other. Correlations range from an average of .895 for adults low temperature to .908 for the ChHT corpus (averaging across 100 random splits of 2x250 books). These correlations are higher compared to the LLM-childLex correlation, which was .62. The result, therefore, shows that the word frequency tables remain very similar across different book titles relative to childLex. Furthermore, correlations were higher in the high compared to the low temperature conditions, and they were higher in the child-directed compared to the adult-directed corpora, the latter likely due to the larger corpus size. Combined, this analysis showed that measuring word frequency based on LLM corpora is highly reliable overall.
+
+\begin{figure}[!htbp]
+
+    \includegraphics[width = 0.8\paperwidth]{figures/boxplot-split-pearson.pdf}
+    \caption{Split half reliability estimates. Box plots show 100 split-half Pearson correlations, indicating the reliability of the log. word frequency measurement for each of the newly generated corpora. Boxes and whiskers represent the distribution of the data, with the box spanning the interquartile range (IQR), which captures the middle 50\% of the data, and the whiskers extend to 1.5 times the IQR, indicating variability outside the upper and lower quartiles. Outliers beyond this range are displayed as individual points.}
+    \label{fig:reliablity}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Distributions of POS tags across types and tokens}
+
+To get insight into the distribution of syntactal categories across corpora, we looked at the distribution of POS tags. We made use of UDPipe's Universal Dependencies (UD) part-of-speech (POS) tagging scheme. Note that their NA tag is used when there is no clear category for a particular word. 
+
+Figure \ref{fig:pos_f} shows that LLM text contains a higher proportion of nouns vs verbs in both types and tokens compared to childLex. This indicates the use of more distinct nouns and more frequent noun use. In addition, childLex also has relatively more distinct adjectives and also more frequent adjective use. Thus, the increased lexical richness in childLex seems to be mostly due to the use of more distinct adjectives and verbs. The differences in the numbers of noun tokens suggest that LLM text is less action-focused and more descriptive.
+
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/pos_f.pdf}
+    \caption{Distribution of POS tags in childLex and LLM corpora based on tokens (bottom panels) and types (top panels). The ordering of all panels follows the order of childLex tokens. }
+    \label{fig:pos_f}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Distributions of POS tags across types and tokesn for the Devel subset of words only}
+
+Figure \ref{fig:pos_f_devel} shows that the distributions of tokens are largely similar, indicating the similarity between LLM and childLex frequency for the DeveL subset of words. The largest difference seems to be related to use of adverbs and adjectives. The top right panel shows what word types are included in DeveL and the top left panel shows which of these word types have a distinctively low frequency in the ChHT corpus. Note that UDPipe misclassified many of the proper nouns as nouns, so the blue bar is not necessarily informative. Thus, the distribution of DeveL types that are missing in the ChHT corpus does not seem very different from the actual distribution of types in Devel.
+For specific details about the selection criteria of DeveL, see the original DeveL paper \citep{schroter_developmental_2017}.
+
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/pos_f_devel.pdf}
+    \caption{Distribution of POS tags for the subset of DeveL words that are also in the childLex and LLM corpora as based on tokens (bottom panels) and types (top panels). The ordering of all panels follows the order of childLex tokens again. }
+    \label{fig:pos_f_devel}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Distributions of word embeddings after dimension reduction}
+
+Figure \ref{fig:embed100} illustrates some syntactical and semantic differences between the corpora. For example, it shows that the distribution of word embeddings of words that are more prevalent in childLex includes a separate semantic area with mostly verbs (see bottom right corner in the bottom right panel) while words that are more prevalent to the LLM corpus (we selected the ChHT corpus for this analysis) includes a separate area with mostly proper nouns. 
+
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.6\paperwidth]{figures/embed100.pdf}
+    \caption{Distributions of word embeddings using dimensionality reduction with UMAP to word vectors from FastText-German. Embeddings were reduced from 300-dimensional vectors. Color coding corresponds to different parts-of-speech (POS) tags as based on UDPipe's "german-hdt" model. The figure shows four different selections of words based on their occurrence and frequency in childLex and ChHT.}
+    \label{fig:embed100}
+\end{figure}
+
+\clearpage
+
+
+\subsection{Words not in childLex or LLM corpus}
+
+Tables \ref{words-adht}, \ref{words-adlt}, \ref{words-chht}, and \ref{words-chlt} show the top frequent words that occur in only one of both corpora, for all word lengths, and for words with more than 10 characters.
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:22 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the AdLT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & AdLT & F & AdLT $>$10 & F \\ 
+  \hline
+daß & 6.1 & widersprach & 3.6 & Max & 7.6 & Charakteren & 4.5 \\ 
+  1 & 5.1 & SternenClan & 3.5 & Anna & 7.1 & Schulvampire & 4.4 \\ 
+  Wieso & 4.8 & Olchi-Kinder & 3.5 & Lena & 6.5 & einzustehen & 4.3 \\ 
+  Gleich & 4.4 & kopfschüttelnd & 3.1 & Lisa & 6.4 & nahegelegenen & 4.3 \\ 
+  guckte & 4.3 & vorwurfsvoll & 3.0 & Müller & 6.3 & thematisiert & 4.2 \\ 
+  Bestimmt & 4.3 & Viertelstunde & 3.0 & Mia & 6.1 & unvergessliche & 4.1 \\ 
+  mußte & 4.2 & augenblicklich & 2.9 & Emma & 5.8 & kindgerechte & 4.0 \\ 
+  Jedenfalls & 4.2 & Mottenflügel & 2.9 & Paul & 5.7 & einfühlsame & 3.9 \\ 
+  guckt & 4.2 & Anscheinend & 2.9 & Harry & 5.7 & Protagonisten & 3.9 \\ 
+  kriegt & 4.2 & stirnrunzelnd & 2.9 & Julia & 5.6 & faszinierendes & 3.9 \\ 
+   \hline
+\end{tabular}
+\label{words-adlt}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the AdHT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & AdHT & F & AdHT $>$10 & F \\ 
+  \hline
+daß & 6.1 & SternenClan & 3.5 & Max & 7.3 & Charakteren & 4.6 \\ 
+  1 & 5.1 & Olchi-Kinder & 3.5 & Anna & 6.9 & nahegelegenen & 4.3 \\ 
+  guckte & 4.3 & einigermaßen & 3.0 & Lena & 6.3 & einzustehen & 4.2 \\ 
+  Bestimmt & 4.3 & Viertelstunde & 3.0 & Lisa & 6.1 & unvergessliche & 4.1 \\ 
+  Blattsee & 4.2 & Mottenflügel & 2.9 & Mia & 6.1 & thematisiert & 4.1 \\ 
+  mußte & 4.2 & stirnrunzelnd & 2.9 & Müller & 6.1 & Schulvampire & 4.1 \\ 
+  Jedenfalls & 4.2 & Wolkenpfote & 2.8 & Paul & 5.8 & Protagonisten & 4.0 \\ 
+  guckt & 4.2 & ausnahmsweise & 2.8 & Emma & 5.8 & kindgerechte & 3.9 \\ 
+  kriegt & 4.2 & Ausgerechnet & 2.7 & Julia & 5.7 & herzerwärmende & 3.8 \\ 
+  Dad & 4.2 & verschränkte & 2.7 & Harry & 5.6 & faszinierendes & 3.7 \\ 
+   \hline
+\end{tabular}
+\label{words-adht}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the ChLT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & ChLT & F & ChLT $>$10 & F \\ 
+  \hline
+daß & 6.1 & Olchi-Kinder & 3.5 & Max & 8.3 & nahegelegenen & 5.0 \\ 
+  1 & 5.1 & Wohnungstür & 3.1 & Mia & 7.5 & Schulvampire & 4.5 \\ 
+  jedenfalls & 4.8 & einigermaßen & 3.0 & Lina & 7.0 & unvergessliche & 4.2 \\ 
+  guckte & 4.3 & Viertelstunde & 3.0 & Lena & 6.7 & Sternenfohlen & 4.1 \\ 
+  mußte & 4.2 & Mottenflügel & 2.9 & Emma & 6.6 & einzustehen & 4.1 \\ 
+  Jedenfalls & 4.2 & stirnrunzelnd & 2.9 & Tim & 6.5 & Inselschüler & 4.0 \\ 
+  kriegt & 4.2 & entgeistert & 2.8 & Felix & 6.4 & Schafgäääng & 3.9 \\ 
+  muß & 4.1 & Wolkenpfote & 2.8 & Paul & 6.3 & KuchenMonster & 3.9 \\ 
+  0 & 4.1 & Unglaublich & 2.8 & Lilli & 6.2 & SkaterBande & 3.7 \\ 
+  wär & 4.1 & ausnahmsweise & 2.8 & Finn & 6.1 & abenteuerlustiger & 3.5 \\ 
+   \hline
+\end{tabular}
+\label{words-chlt}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:24 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the ChHT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & ChHT & F & ChHT $>$10 & F \\ 
+  \hline
+daß & 6.1 & Olchi-Kinder & 3.5 & Max & 8.1 & nahegelegenen & 4.9 \\ 
+  1 & 5.1 & unwillkürlich & 3.1 & Mia & 7.3 & Schulvampire & 4.4 \\ 
+  mußte & 4.2 & Wohnungstür & 3.1 & Lina & 6.7 & unvergessliche & 4.2 \\ 
+  Jedenfalls & 4.2 & Viertelstunde & 3.0 & Lena & 6.6 & Sternenfohlen & 4.1 \\ 
+  kriegt & 4.2 & Mottenflügel & 2.9 & Emma & 6.6 & Inselschüler & 4.0 \\ 
+  muß & 4.1 & stirnrunzelnd & 2.9 & Tim & 6.6 & einzustehen & 4.0 \\ 
+  0 & 4.1 & ausnahmsweise & 2.8 & Felix & 6.4 & Schafgäääng & 3.8 \\ 
+  wär & 4.1 & Ausgerechnet & 2.7 & Paul & 6.3 & KuchenMonster & 3.8 \\ 
+  andern & 4.1 & verständnislos & 2.7 & Finn & 6.2 & SkaterBande & 3.7 \\ 
+  wußte & 3.9 & Premierminister & 2.7 & Anna & 6.2 & abenteuerlustiger & 3.4 \\  
+   \hline
+\end{tabular}
+\label{words-chht}
+\end{table}
+
+\clearpage
+
+\subsection{Top frequency words occurring the least often in childLex or LLM corpus}
+
+Tables \ref{words-adht-low}, \ref{words-adlt-low}, \ref{words-chht-low}, and \ref{words-chlt-low} show the top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters.
+
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:22 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the AdLT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & AdLT & F & AdLT $>$10 & F \\ 
+  \hline
+wenigstens & 4.9 & Hoffentlich & 4.4 & unterhaltsame & 5.6 & unterhaltsame & 5.6 \\ 
+  Eigentlich & 4.7 & Schnupferich & 3.6 & lehrreiche & 5.0 & unschlagbares & 4.3 \\ 
+  Hoffentlich & 4.4 & Zehenspitzen & 3.3 & Charaktere & 5.0 & Perspektiven & 3.6 \\ 
+  vorhin & 4.2 & verächtlich & 3.1 & Bindung & 4.9 & Korallenschatz & 3.5 \\ 
+  irgendwas & 4.1 & einigermaßen & 3.0 & Teamwork & 4.5 & vielfältige & 3.4 \\ 
+  blöd & 4.1 & Pfannkuchen & 2.9 & unschlagbares & 4.3 & Sattelschlepper & 3.4 \\ 
+  kreischte & 3.9 & entgeistert & 2.8 & humorvolle & 4.0 & unvergesslicher & 3.4 \\ 
+  Mist & 3.8 & Ausgerechnet & 2.7 & Jack & 3.9 & weiterzuentwickeln & 3.4 \\ 
+  Mehr & 3.8 & Mittlerweile & 2.7 & zeitlose & 3.8 & Mäusepension & 3.3 \\ 
+  Klo & 3.8 & verschränkte & 2.7 & Überwinden & 3.8 & authentisch & 3.3 \\ 
+   \hline
+\end{tabular}
+\label{words-adlt-low}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the AdHT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & AdHT & F & AdHT $>$10 & F \\ 
+  \hline
+jedenfalls & 4.8 & Wahrscheinlich & 4.6 & unterhaltsame & 5.4 & unterhaltsame & 5.4 \\ 
+  Wahrscheinlich & 4.6 & Hoffentlich & 4.4 & Charaktere & 5.0 & unschlagbares & 4.0 \\ 
+  flüstert & 4.4 & Unglaublich & 2.8 & lehrreiche & 4.8 & Perspektiven & 3.7 \\ 
+  Hoffentlich & 4.4 & verständnislos & 2.7 & Bindung & 4.8 & vielfältige & 3.6 \\ 
+  Quatsch & 4.1 & Premierminister & 2.7 & Teamwork & 4.3 & Mäusepension & 3.5 \\ 
+  hockte & 4.0 & Seidenschnabel & 2.6 & humorvolle & 4.1 & Sattelschlepper & 3.3 \\ 
+  Dem & 3.9 & Offensichtlich & 2.6 & unschlagbares & 4.0 & unzertrennliche & 3.3 \\ 
+  Ihm & 3.8 & Erstklässler & 2.6 & zeitlose & 3.9 & Bedrohungen & 3.3 \\ 
+  Meinst & 3.8 & Großmutters & 2.6 & Ermittler & 3.8 & vielschichtigen & 3.3 \\ 
+  gucken & 3.8 & irgendwelchen & 2.5 & Poppins & 3.7 & Korallenschatz & 3.3 \\ 
+   \hline
+\end{tabular}
+\label{words-adht-low}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the ChLT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & ChLT & F & ChLT $>$10 & F \\ 
+  \hline
+wenigstens & 4.9 & Augenbrauen & 3.7 & unschlagbares & 4.6 & unschlagbares & 4.6 \\ 
+  hockte & 4.0 & SternenClan & 3.5 & Brumm & 4.2 & unzertrennliche & 3.9 \\ 
+  Dem & 3.9 & unwillkürlich & 3.1 & unzertrennliche & 3.9 & Sattelschlepper & 3.8 \\ 
+  Ihm & 3.8 & augenblicklich & 2.9 & Sattelschlepper & 3.8 & unvergessliches & 3.8 \\ 
+  Augenbrauen & 3.7 & Treppenhaus & 2.9 & unvergessliches & 3.8 & aufgewecktes & 3.6 \\ 
+  Immerhin & 3.7 & Einverstanden & 2.7 & Charaktere & 3.8 & Mäusepension & 3.6 \\ 
+  nachher & 3.6 & Vorbeigehen & 2.6 & Poppins & 3.8 & unvergesslicher & 3.5 \\ 
+  Deswegen & 3.6 & Offensichtlich & 2.6 & Holle & 3.8 & Korallenschatz & 3.5 \\ 
+  Außer & 3.5 & Krankenflügel & 2.6 & aufgewecktes & 3.6 & Schulgespenst & 3.4 \\ 
+  SternenClan & 3.5 & irgendwelchen & 2.5 & Zaubermaus & 3.6 & unterhaltsame & 3.3 \\ 
+   \hline
+\end{tabular}
+\label{words-chlt-low}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:24 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the ChHT corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & ChHT & F & ChHT $>$10 & F \\ 
+  \hline
+Neunauge & 4.0 & Anscheinend & 2.9 & unschlagbares & 4.5 & unschlagbares & 4.5 \\ 
+  Meinst & 3.8 & entgeistert & 2.8 & Brumm & 4.0 & unzertrennliche & 3.9 \\ 
+  Mehr & 3.8 & Mittlerweile & 2.7 & unzertrennliche & 3.9 & unvergessliches & 3.8 \\ 
+  Madam & 3.7 & verschränkte & 2.7 & Charaktere & 3.8 & Sattelschlepper & 3.7 \\ 
+  Mum & 3.6 & Großmutters & 2.6 & Poppins & 3.8 & aufgewecktes & 3.6 \\ 
+  womöglich & 3.5 & gerunzelter & 2.5 & unvergessliches & 3.8 & unvergesslicher & 3.5 \\ 
+  Außer & 3.5 & vorsichtshalber & 2.5 & Sattelschlepper & 3.7 & Schulgespenst & 3.5 \\ 
+  gekriegt & 3.5 & umständlich & 2.3 & Holle & 3.7 & Mäusepension & 3.5 \\ 
+  Wozu & 3.5 & Donnerwetter & 2.3 & Bindung & 3.6 & Korallenschatz & 3.5 \\ 
+  werd & 3.4 & unvermittelt & 2.3 & aufgewecktes & 3.6 & unterhaltsame & 3.3 \\ 
+   \hline
+\end{tabular}
+\label{words-chht-low}
+\end{table}
+
+\clearpage
+
+\section{Experiment 3}
+
+\subsection{Type-token comparison}
+
+\begin{figure}[!htbp]
+    \includegraphics[width = .8\paperwidth]{figures/vgc_plots_grid_exp3_20.pdf}
+    \caption{Similar to Figures \ref{fig:df.growth.intrextr} and \ref{fig:df.growth.intrextr2}, these type-token growth curves show the dependency of the total number of unique types (y-axis) on inter- and extrapolated sample sizes (x-axis) for both Llama (top), and DeepSeek corpora (bottom).}
+    \label{fig:df.growth.intrextr3}
+  \hfill
+\end{figure}
+
+\clearpage  
+
+\subsection{Corpus overlap}
+
+Figure \ref{fig:heatmaps-exp3} shows overlap between the Experiment 3 corpora, similar to Figure \ref{fig:heatmaps}. The left panel shows overlap for all generated words and the right panels shows overlap for the selection of DeveL words only. Overlap with DeveL is almost 100\%. 14 DeveL words are missing in DeepSeek long (98.7\%). For example, the DeepSeek long corpus
+did not contain words like Apfelsine, Automatik, Fasching (out-of-fashion words for orange, automatic, and Carnival respectively).
+
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/heatmaps-exp3.pdf}
+    \caption{Overlap measured as percentage of retrieved words from one of both corpora. Overlap was defined as a word frequency > 0 for both corpora. The overlap percentages were computed by taking the number of words shared between the corresponding corpus listed on the left and bottom and dividing that number by the total corpus size of the corpus listed on the bottom row. Panel A shows percentages for complete corpora while panel B shows overlap for the DeveL selection of words only.}
+    \label{fig:heatmaps-exp3}
+\end{figure}
+
+\clearpage
+
+\subsection{Lexical Richness}
+
+Predicted number of types in hypothetical 10-million-token corpora.
+        
+\begin{figure}[!htbp]
+    \includegraphics[width = 0.8\paperwidth]{figures/zipfR_extrapolation.pdf}
+    \caption{Based on the estimated growth curves in Figures \ref{fig:df.growth.intrextr}, \ref{fig:df.growth.intrextr2}, and \ref{fig:df.growth.intrextr3}, we determined the predicted number of types for a hyphotetical 10-million-token corpus. The order of types turned out to be the same as the ordering based on the percentage of hapax tokens.}
+    \label{fig:zipfR_extrapolation}
+  \hfill
+\end{figure}
+
+\clearpage  
+
+
+\subsection{Words not in childLex or LLM corpus}
+
+Tables \ref{words-dslo}, \ref{words-dssh}, \ref{words-lllo}, and \ref{words-llsh} show the top frequent words that occur in only one of both corpora, for all word lengths, and for words with more than 10 characters.
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:22 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the DS-long corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & DS-long & F & DS-long $>$10 & F \\ 
+  \hline
+1 & 5.1 & Brombeerkralle & 3.8 & Lina & 7.6 & Protagonist & 4.3 \\ 
+  Blattsee & 4.2 & Olchi-Kinder & 3.5 & Max & 6.9 & Protagonistin & 4.2 \\ 
+  mußte & 4.2 & einigermaßen & 3.0 & Lena & 6.7 & ausarbeiten & 3.7 \\ 
+  muß & 4.1 & Anschließend & 3.0 & Tom & 6.4 & Protagonisten & 3.6 \\ 
+  0 & 4.1 & Anscheinend & 2.9 & Mia & 6.3 & Algorithmus & 3.3 \\ 
+  Neunauge & 4.0 & ausnahmsweise & 2.8 & Oh & 6.3 & Algorithmen & 3.2 \\ 
+  Brombeerkralle & 3.8 & Mittlerweile & 2.7 & Ben & 6.2 & Postskriptum & 3.2 \\ 
+  T-Shirt & 3.5 & verständnislos & 2.7 & Leo & 6.2 & Nebenfiguren & 3.1 \\ 
+  Olchi-Kinder & 3.5 & Premierminister & 2.7 & Finn & 6.0 & inspirierte & 3.0 \\ 
+  bißchen & 3.4 & Tagespropheten & 2.7 & Emma & 5.9 & einzustehen & 3.0 \\ 
+   \hline
+\end{tabular}
+\label{words-dslo}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the DS-Short corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & DS-Short & F & DS-Short $>$10 & F \\ 
+  \hline
+daß & 6.1 & Brombeerkralle & 3.8 & Lina & 8.7 & Leseanfänger & 4.9 \\ 
+  1 & 5.1 & Olchi-Kinder & 3.5 & Lena & 7.9 & Mississippi & 4.0 \\ 
+  allmählich & 4.3 & einigermaßen & 3.0 & Max & 7.8 & Selberlesen & 4.0 \\ 
+  Blattsee & 4.2 & Viertelstunde & 3.0 & Ben & 7.6 & Schmuddelfing & 3.9 \\ 
+  mußte & 4.2 & Anschließend & 3.0 & Tom & 7.5 & selbstgebastelten & 3.8 \\ 
+  muß & 4.1 & Mottenflügel & 2.9 & Finn & 7.1 & Scherzfragen & 3.2 \\ 
+  0 & 4.1 & eindringlich & 2.9 & Leo & 7.0 & KuchenMonster & 3.2 \\ 
+  Neunauge & 4.0 & Anscheinend & 2.9 & Mia & 6.9 & SkaterBande & 3.1 \\ 
+  wußte & 3.9 & stirnrunzelnd & 2.9 & Paul & 6.4 & ParkSheriffs & 3.1 \\ 
+  Brombeerkralle & 3.8 & entgeistert & 2.8 & Tim & 6.3 & Sonnenschule & 3.1 \\ 
+   \hline
+\end{tabular}
+\label{words-dssh}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the Llama-long corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & Llama-long & F & Llama-long $>$10 & F \\ 
+  \hline
+daß & 6.1 & Wahrscheinlich & 4.6 & Tim & 7.7 & Selbstreflexion & 5.2 \\ 
+  eben & 5.8 & Hoffentlich & 4.4 & Max & 7.6 & inspirierte & 4.9 \\ 
+  Ganz & 5.1 & Taschenbier & 4.0 & Lena & 7.3 & Initiativen & 4.9 \\ 
+  1 & 5.1 & ausgerechnet & 4.0 & Müller & 6.4 & Nachhaltigkeit & 4.8 \\ 
+  sowieso & 5.0 & Brombeerkralle & 3.8 & Timmy & 6.3 & Überzeugungen & 4.4 \\ 
+  allerdings & 5.0 & Hosentasche & 3.7 & Leo & 6.2 & Empfehlungen & 4.3 \\ 
+  selber & 5.0 & Schnupferich & 3.6 & Emma & 6.0 & kulturellen & 4.3 \\ 
+  Eigentlich & 4.7 & anscheinend & 3.5 & Harry & 5.5 & nachhaltigen & 4.2 \\ 
+  Wahrscheinlich & 4.6 & Zeigefinger & 3.5 & Epilog & 5.4 & unvergessliche & 4.1 \\ 
+  Stimmt & 4.5 & SternenClan & 3.5 & Anna & 5.4 & inspirierten & 4.0 \\ 
+   \hline
+\end{tabular}
+\label{words-lllo}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:24 2024
+\begin{table}[!htbp]
+\caption{Words not in Childlex or in the Llama-short corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & Llama-short & F & Llama-short $>$10 & F \\ 
+  \hline
+daß & 6.1 & Wahrscheinlich & 4.6 & Max & 8.5 & nahegelegenen & 5.0 \\ 
+  Nun & 5.9 & Taschenbier & 4.0 & Tim & 8.3 & ParkSheriffs & 4.1 \\ 
+  Ganz & 5.1 & Brombeerkralle & 3.8 & Lena & 8.2 & unvergessliche & 4.0 \\ 
+  1 & 5.1 & Hosentasche & 3.7 & Leo & 7.1 & Schulvampire & 3.9 \\ 
+  allerdings & 5.0 & Schnupferich & 3.6 & Müller & 6.9 & KuchenMonster & 3.9 \\ 
+  offenbar & 5.0 & anscheinend & 3.5 & Emma & 6.8 & Inselschüler & 3.9 \\ 
+  selber & 5.0 & Zeigefinger & 3.5 & Timmy & 6.7 & PicknickEssen & 3.8 \\ 
+  wenigstens & 4.9 & SternenClan & 3.5 & Felix & 6.5 & abenteuerlustiger & 3.8 \\ 
+  deutete & 4.9 & mittlerweile & 3.5 & Anna & 6.1 & Schafgäääng & 3.8 \\ 
+  rasch & 4.9 & Olchi-Kinder & 3.5 & Lilli & 6.1 & Mississippi & 3.7 \\ 
+   \hline
+\end{tabular}
+\label{words-llsh}
+\end{table}
+
+\clearpage
+
+
+
+
+\subsection{Top frequency words occurring the least often in childLex or LLM corpus}
+
+Tables \ref{words-dslo-low}, \ref{words-dssh-low}, \ref{words-llsh-low}, and \ref{words-lllo-low} show the top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters.
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:22 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the DS-long corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & DS-long & F & DS-long $>$10 & F \\ 
+  \hline
+daß & 6.1 & Viertelstunde & 3.0 & Twist & 5.0 & vergessenes & 4.3 \\ 
+  wußte & 3.9 & entgeistert & 2.8 & Optionen & 4.7 & flüsternden & 3.7 \\ 
+  erkundigte & 3.7 & Kinderstube & 2.6 & Charaktere & 4.4 & Menschlichkeit & 3.6 \\ 
+  Feuerstern & 3.6 & Einzelheiten & 2.5 & vergessenes & 4.3 & weiterspinnen & 3.3 \\ 
+  wisperte & 3.5 & Treppenabsatz & 2.5 & Größerem & 4.1 & Erweiterung & 3.1 \\ 
+  Hemul & 3.1 & hergekommen & 2.4 & Nachhall & 3.9 & Vergessenen & 3.1 \\ 
+  Daran & 3.1 & Detektivtagebuch & 2.3 & Teamwork & 3.8 & Perspektiven & 3.0 \\ 
+  Viertelstunde & 3.0 & Vorderpfoten & 2.3 & Fokus & 3.8 & Koordinaten & 3.0 \\ 
+  Allmählich & 3.0 & Umkleideraum & 2.2 & flüsternden & 3.7 & mysteriöser & 3.0 \\ 
+  sogleich & 2.9 & auszumachen & 2.2 & Dialogen & 3.7 & Gemeinschaften & 2.9 \\ 
+   \hline
+\end{tabular}
+\label{words-dslo-low}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the DS-Short corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & DS-Short & F & DS-Short $>$10 & F \\ 
+  \hline
+selber & 5.0 & Staubfinger & 3.3 & Schneider & 4.9 & Detektivgeschichte & 3.5 \\ 
+  andern & 4.1 & aufgebracht & 3.1 & Teamwork & 4.3 & überlisteten & 3.3 \\ 
+  höchst & 3.5 & kopfschüttelnd & 3.1 & Brumm & 4.1 & flüsternden & 3.3 \\ 
+  Staubfinger & 3.3 & Wohnungstür & 3.1 & Weber & 4.0 & Mäusepension & 3.1 \\ 
+  weshalb & 3.3 & Angelegenheit & 3.0 & Hoppel & 4.0 & Herbstabend & 3.1 \\ 
+  Hastig & 3.3 & augenblicklich & 2.9 & Poppins & 3.8 & Sattelschlepper & 3.0 \\ 
+  Wenigstens & 3.2 & ausnahmsweise & 2.8 & Detektivgeschichte & 3.5 & mysteriöser & 3.0 \\ 
+  Vermutlich & 3.2 & Tagespropheten & 2.7 & Holle & 3.5 & Kristallhöhle & 2.9 \\ 
+  Charlotte & 3.2 & möglicherweise & 2.7 & Kitz & 3.4 & regnerischer & 2.9 \\ 
+  aufgebracht & 3.1 & Vorbeigehen & 2.6 & überlisteten & 3.3 & Superkicker & 2.9 \\ 
+   \hline
+\end{tabular}
+\label{words-dssh-low}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:23 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the Llama-short corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & Llama-short & F & Llama-short $>$10 & F \\ 
+  \hline
+eben & 5.8 & Augenbrauen & 3.7 & Jack & 4.8 & unzertrennliche & 3.9 \\ 
+  Eigentlich & 4.7 & widersprach & 3.6 & Brumm & 4.4 & Mäusepension & 3.7 \\ 
+  beinahe & 4.4 & blitzschnell & 3.4 & Poppins & 4.2 & unvergessliches & 3.5 \\ 
+  außerdem & 4.4 & aufgebracht & 3.1 & Holle & 4.1 & Sattelschlepper & 3.5 \\ 
+  glaub & 4.4 & Gleichzeitig & 3.1 & Zaubermaus & 4.0 & unvergesslicher & 3.4 \\ 
+  weder & 4.3 & erstaunlich & 3.0 & unzertrennliche & 3.9 & verantwortungsvoll & 3.4 \\ 
+  ungefähr & 4.3 & Angelegenheit & 3.0 & Benz & 3.9 & Piratenschreck & 3.3 \\ 
+  guckt & 4.2 & umklammerte & 3.0 & Ravensburg & 3.8 & Wunschzauber & 3.3 \\ 
+  furchtbar & 4.2 & Jackentasche & 3.0 & Cleverness & 3.8 & abenteuerlustiges & 3.2 \\ 
+  Dad & 4.2 & hintereinander & 2.8 & Erinner & 3.8 & Geheimschwein & 3.1 \\ 
+   \hline
+\end{tabular}
+\label{words-llsh-low}
+\end{table}
+
+% latex table generated in R 4.2.2 by xtable 1.8-4 package
+% Fri Jun 14 15:20:24 2024
+\begin{table}[!htbp]
+\caption{The top frequent words that occur the least often in the other corpus, for all word lengths, and for words with more than 10 characters for the Llama-long corpus}
+\centering
+\begin{tabular}{lrlrlrlr}
+  \hline
+childLex & F & childLex $>$10 & F & Llama-long & F & Llama-long $>$10 & F \\ 
+  \hline
+wenigstens & 4.9 & durcheinander & 4.0 & nachhaltige & 5.5 & nachhaltige & 5.5 \\ 
+  jedenfalls & 4.8 & unauffällig & 3.3 & Motivation & 5.2 & Gemeinschaften & 4.9 \\ 
+  Wieso & 4.8 & Normalerweise & 3.3 & Gemeinschaften & 4.9 & Technologien & 4.6 \\ 
+  zischte & 4.7 & protestierte & 3.2 & lokalen & 4.8 & Perspektiven & 4.6 \\ 
+  Klar & 4.5 & verächtlich & 3.1 & Ära & 4.8 & Selbstlosigkeit & 4.2 \\ 
+  schreit & 4.4 & irgendeinem & 3.1 & Jack & 4.6 & unterstützende & 4.1 \\ 
+  Dafür & 4.3 & unwillkürlich & 3.1 & Technologien & 4.6 & Unterstützen & 3.9 \\ 
+  Kaum & 4.3 & Treppenhaus & 2.9 & Perspektiven & 4.6 & weiterzuentwickeln & 3.8 \\ 
+  guckt & 4.2 & Schrottplatz & 2.9 & Charaktere & 4.6 & authentisch & 3.7 \\ 
+  Dad & 4.2 & schlagartig & 2.9 & Bindung & 4.5 & Zukunftsaussichten & 3.6 \\ 
+   \hline
+\end{tabular}
+\label{words-lllo-low}
+\end{table}
+
+\clearpage
+
+
+
+\end{document}
+
