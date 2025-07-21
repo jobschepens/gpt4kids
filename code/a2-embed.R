@@ -2,7 +2,14 @@ library(data.table)
 library(tidyverse)
 library(umap)
 library(udpipe)
-library(fastTextR)
+# fastTextR only needed for binary format
+if (file.exists("../data-original/cc.de.300.bin")) {
+  tryCatch({
+    library(fastTextR)
+  }, error = function(e) {
+    cat("fastTextR not available - will use vector format only\n")
+  })
+}
 source("a2-embed-config.R")
 source("a2-embed-translation_utils.R")
 set.seed(RANDOM_SEED)
@@ -45,6 +52,11 @@ getPlot <- function(words_of_interest, use_english = FALSE, stored_sample = NULL
     if (nrow(word_subset) == 0) {
       return(data.frame())
     }
+    # Preserve original word order by matching against word_sample
+    word_subset <- word_subset[match(word_sample, word_subset$word), ]
+    # Remove NAs (words not found in FastText)
+    valid_indices <- !is.na(word_subset$word)
+    word_subset <- word_subset[valid_indices, ]
     word_vectors <- as.matrix(word_subset[, -1, with = FALSE])
     word_sample <- word_subset$word
   }
@@ -74,13 +86,16 @@ getPlot <- function(words_of_interest, use_english = FALSE, stored_sample = NULL
   pos_df <- as.data.frame(pos_result)
   
   # Get the first POS tag for each word (in case of tokenization splits)
+  # udpipe creates doc_id as "doc1", "doc2", etc. in the same order as input
   pos_tags <- pos_df %>%
     group_by(doc_id) %>%
     slice(1) %>%
+    arrange(as.numeric(gsub("doc", "", doc_id))) %>%  # Ensure proper order
     pull(upos)
   
   # Ensure we have the right number of POS tags
   if (length(pos_tags) != length(word_sample)) {
+    cat("Warning: POS tag count mismatch. Expected:", length(word_sample), "Got:", length(pos_tags), "\n")
     pos_tags <- rep("UNKNOWN", length(word_sample))
   }
   
