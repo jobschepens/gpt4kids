@@ -16,9 +16,9 @@ Unzip the data into the data-original directory so the folder structure matches 
 
 ### DOI's
 - **Code DOI**: `10.5281/zenodo.16415370`
-- **Data DOI**: `10.5281/zenodo.16412822` - LLM-generated experimental corpora
+- **Data DOI**: `10.5281/zenodo.16412822` 
 
-## Data Availability
+## Data
 
 ### Included in Zenodo Archive
 - **Experiment 1**: GPT generated corpora vs childLex comparison data
@@ -32,6 +32,6 @@ Unzip the data into the data-original directory so the folder structure matches 
 - **devel/**: Reading performance behavioral data
 
 
-## 🔧 Dependencies
+## Dependencies
 - R (>= 4.0): [detailed package list in environment.yml]
 - Python (>= 3.8): For corpus generation
