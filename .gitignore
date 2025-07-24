@@ -4,12 +4,53 @@
 *.site
 *.Rproj
 *.udpipe
-RProfile.site
-/figures/eps_converted_ghostscript
+RProf# Archives and compressed files
+*.zip
+*.tar.gz
+
+# Python cache
+__pycache__/
+.pytest_cache/
+
+# pkgdown site
+docs/
+
+# translation temp files
+po/*~
+
+# RStudio Connect folder
+rsconnect/
+
+# docs 
+docs/
+
+# legacy code data (archived)
+code-archive/
+
+# CRITICAL: EXCLUDE ALL DATA (stored separately via Zenodo)
+# Raw data directories
+data-original/
+
+# Legacy code data (archived)
+code-archive/legacy-data-processed/
+code-archive/legacy-figures/
+code-archive/legacy-text/
+
+# Data download configuration (sensitive)
+data_download_info.txt
+
+# Environment files
+.env
+.env.local
+
+# intermediate files/eps_converted_ghostscript
 
 # History files
 .Rhistory
 .Rapp.history
+
+# github
+.github/
 
 # Session Data files
 .RData
@@ -47,6 +88,21 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+.env
+data-original/exp1
+data-original/exp2
+data-original/exp3
+
+code-archive/legacy-data-processed/
+code-archive/legacy-figures/
+code-archive/legacy-text/
+*.zip
+*.tar.gz
+
+# Python cache
+__pycache__/
+.pytest_cache/
 
 # pkgdown site
 docs/

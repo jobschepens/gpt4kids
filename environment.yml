@@ -1,0 +1,20 @@
+name: gpt4kids
+channels:
+  - conda-forge
+  - r
+dependencies:
+  - r-base>=4.0
+  - python>=3.8
+  - r-renv
+  - r-tidyverse
+  - r-tm
+  - r-udpipe
+  - r-ggplot2
+  - r-lme4
+  - wget              # For data download
+  - unzip             # For data extraction
+  - pip
+  - pip:
+    - jupyter
+    - pandas
+    - openai

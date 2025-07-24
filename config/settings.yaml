@@ -1,0 +1,22 @@
+experiments:
+  exp1:
+    description: "GPT-3.5 vs childLex comparison"
+    key_scripts: ["1-devel_ben_agin_pup.Rmd", "1-*.R"]
+  exp2:
+    description: "Temperature and audience variation"
+    conditions: ["adlt", "adht", "chlt", "chht"]
+    key_scripts: ["2-analysis_pup.Rmd", "2-*.R"]
+  exp3:
+    description: "Open-weight LLMs"
+    models: ["llama", "deepseek"]
+    key_scripts: ["a2-*.R"]
+
+r_environment:
+  min_version: "4.0"
+  key_packages: ["tm", "udpipe", "ggplot2", "dplyr", "lme4"]
+  german_locale: "German_Germany.UTF-8"
+
+analysis:
+  min_frequency: 5
+  statistical_threshold: 0.05
+  random_seed: 1234
