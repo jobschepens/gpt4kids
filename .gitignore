@@ -1,117 +1,69 @@
-*.pyc
-*.vec
-*.DS_Store
-*.site
-*.Rproj
-*.udpipe
-RProf# Archives and compressed files
-*.zip
-*.tar.gz
+# --- System, Editor, and OS-specific files ---
+.DS_Store
+.Rproj.user/
+.github/
 
-# Python cache
-__pycache__/
-.pytest_cache/
-
-# pkgdown site
-docs/
-
-# translation temp files
-po/*~
-
-# RStudio Connect folder
-rsconnect/
-
-# docs 
-docs/
-
-# legacy code data (archived)
-code-archive/
-
-# CRITICAL: EXCLUDE ALL DATA (stored separately via Zenodo)
-# Raw data directories
-data-original/
-
-# Legacy code data (archived)
-code-archive/legacy-data-processed/
-code-archive/legacy-figures/
-code-archive/legacy-text/
-
-# Data download configuration (sensitive)
-data_download_info.txt
-
-# Environment files
-.env
-.env.local
-
-# intermediate files/eps_converted_ghostscript
-
+# --- R ---
 # History files
 .Rhistory
 .Rapp.history
-
-# github
-.github/
-
-# Session Data files
 .RData
 .RDataTmp
-
-# User-specific files
 .Ruserdata
+.Renviron
 
-# Example code in package build process
+# RStudio specific
+.Rproj
+rsconnect/
+RProf
+
+# Package build files
 *-Ex.R
-
-# Output files from R CMD build
-/*.tar.gz
-
-# Output files from R CMD check
 /*.Rcheck/
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
 vignettes/*.html
 vignettes/*.pdf
-
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
 
-# knitr and R markdown default cache directories
+# Caching
 *_cache/
 /cache/
 
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
+# Other
+*.udpipe
 
-# R Environment Variables
-.Renviron
-
-.env
-data-original/exp1
-data-original/exp2
-data-original/exp3
-
-code-archive/legacy-data-processed/
-code-archive/legacy-figures/
-code-archive/legacy-text/
-*.zip
-*.tar.gz
-
-# Python cache
+# --- Python ---
+# Cache
 __pycache__/
 .pytest_cache/
 
-# pkgdown site
+# Compiled python
+*.pyc
+
+# --- Project Data ---
+# CRITICAL: EXCLUDE ALL DATA (stored separately via Zenodo)
+data-original/
+data-processed/
+data_download_info.txt
+
+# --- Archives & Compressed Files ---
+# Ignore all archives, except for zip files in the /production directory
+*.zip
+*.tar.gz
+!/production/*.zip
+
+# --- Dependencies & Environment ---
+.env
+.env.local
+
+# --- Generated Files & Directories ---
+# Documentation
 docs/
 
-# translation temp files
+# Other
+*.vec
+*.site
 po/*~
 
-# RStudio Connect folder
-rsconnect/
-
-# intermediate files
-# 
+# --- Archives ---
+# Legacy code and data
+code-archive/
